@@ -1,0 +1,28 @@
+Package: AnalysisPipelineACS
+Type: Package
+Title: Provide analysis pipeline functions for ACS analyses
+Version: 0.1.0
+Author: Miguel Julio Rodo
+Maintainer: Miguel Julio Rodo <rdxmig002@myuct.ac.za>
+Description: The acscompendium analyses multiple datasets. 
+    They are not always analysed in the same package (for reasons
+    of differing collaborators), but require similar
+    functions for the analysispipeline::run_analysis_pipeline 
+    function. This package provides these functions for
+    these various analysis packages. 
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Imports: 
+    magrittr,
+    glmmTMB,
+    lme4,
+    cowplot,
+    purrr,
+    tidyr,
+    stringr,
+    dplyr,
+    ggplot2
