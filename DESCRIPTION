@@ -1,4 +1,4 @@
-Package: AnalysisPipelineACS
+Package: PipelineAnalysisACS
 Type: Package
 Title: Provide analysis pipeline functions for ACS analyses
 Version: 0.1.0
