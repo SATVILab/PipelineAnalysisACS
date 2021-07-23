@@ -2,7 +2,8 @@
 
 #' @title Fit plots
 #'
-plot_fit_fn <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj,
+#' @export
+plot_fit <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj,
                         fit_stats){
 
   #return(invisible(TRUE))

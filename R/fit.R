@@ -1,6 +1,8 @@
 #' @import lme4
 #' @import glmmTMB
-fit_fn <- function(data_mod, params_dots, dir_proj){
+#'
+#' @export
+fit <- function(data_mod, params_dots, dir_proj){
 
   # check if old output is to be ignored
   ignore_old_output <- switch(as.character(identical(params_dots$ignore_old_output, "")),

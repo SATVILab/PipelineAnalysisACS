@@ -1,5 +1,4 @@
 #' @title Directory where data is processed
-#' @export
 dir_data_prep <- "C:/Users/migue/Work/PhD/Code/cytofacs"
 
 #' @title Get base directory to save results to
@@ -18,7 +17,6 @@ dir_data_prep <- "C:/Users/migue/Work/PhD/Code/cytofacs"
 #' @details In future, could automatically add the resultant directory to .Rbuildignore and .gitignore (if not
 #' already in it).
 #' @param dataset "cytof". Specifies type of dataset.
-#' @export
 get_dir_save <- function(type, dataset){
 
   # package directory
@@ -45,7 +43,6 @@ get_dir_save <- function(type, dataset){
 #' @param dataset "cytof" or "antibody".
 #'
 #' @return Character.
-#' @export
 get_dir_data_prep <- function(dataset){
   if(!dataset %in% c("cytof", "antibody")){
     stop(paste0(dataset, " (dataset parameter in get_dir_data_prep fn) should be one of cytof or antibody"))

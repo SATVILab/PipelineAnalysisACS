@@ -7,7 +7,8 @@
 # - mw/kw stats for categorical variables
 # - slice into even groups for kw if a continuous variable
 
-get_fit_stats_fn <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
+#' @export
+get_fit_stats <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
 
   # Check if to rerun
   # ==============================

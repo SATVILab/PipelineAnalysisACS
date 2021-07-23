@@ -1,4 +1,5 @@
-plot_val_fn <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
+#' @export
+plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
 
   # ===========================
   # Check if to rerun

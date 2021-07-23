@@ -1,12 +1,13 @@
 #' @title Pre-process data
-#' TODO: Sum over 040238 samples
-preprocess_fn <- function(data_raw, params_dots, dir_proj){
-
-  if('skip_if_html_found' %in% names(params_dots)){
-    if(params_dots$skip_if_html_found){
-      if(file.exists(file.path(dir_proj, "output.html"))) stop('Stopping run because html already found.')
-    }
-  }
+#'
+#' @import ggplot2
+#' @importFrom magrittr %>%
+#' @import stringr
+#' @import lme4
+#' @import glmmTMB
+#'
+#' @export
+preprocess <- function(data_raw, params_dots, dir_proj){
 
   print(dir_proj)
   data_raw %<>% tibble::as_tibble()
@@ -280,7 +281,7 @@ preprocess_fn <- function(data_raw, params_dots, dir_proj){
   if(params_dots$response_type %in% c('hladr_med_diff')){
     boost <- 0.01 * (diff(range(data_raw$resp)))
   #  boot <- boost + rnorm(nrow(data_raw), sd = boost/3)
-    data_raw %<>% dplyr::dplyr::mutate(resp = pmax(resp, boost))
+    data_raw %<>% dplyr::mutate(resp = pmax(resp, boost))
   }
 
   # ===========================

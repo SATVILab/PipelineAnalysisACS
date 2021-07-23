@@ -1,8 +1,8 @@
 # ====================================
 
 #' @title Make exploratory plots
-#'
-plot_exp_fn <- function(data_raw, data_mod, dir_proj, params_dots){
+#' @export
+plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
 
   # check if old output is to be ignored
   ignore_old_output <- switch(as.character(identical(params_dots$ignore_old_output, "")),
