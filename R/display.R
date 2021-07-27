@@ -174,7 +174,7 @@ display <- function(data_raw, data_mod, dir_proj,
                                      "no" = "dodgerblue")) +
       labs(x = np_var, y = "Response")
 
-    lr_tbl <- readRDS(file.path(p_dots$dir_stg, "lr.rds"))
+    lr_tbl <- readRDS(file.path(dirname(p_dots$dir_stg), "extr", "lr.rds"))
     lr_tbl %<>%
       dplyr::mutate(var = purrr::map_chr(var, function(x){
         x %>%
@@ -184,24 +184,30 @@ display <- function(data_raw, data_mod, dir_proj,
 
     res_text <- paste0(lr_tbl$var, ": ", signif(lr_tbl$p, digits = 3))
 
-    data_raw_plot <- data_mod %>%
-      dplyr::mutate(ttb =  p_dots$iter$ttb_max - (tfmttb * 1e2)) %>%
-      dplyr::mutate(resp = purrr::map_dbl(1:nrow(data_mod), function(i){
-        if(!n_cell_ind) return(data_mod$resp[i])
-        data_mod$resp[i]/data_mod$n_cell[i]*1e2
-      })) %>%
-      dplyr::select(!!np_var, resp, Progressor, ttb) %>%
-      dplyr::mutate(ttb_cat = ifelse(ttb > 360, "360-", ""),
-             ttb_cat = ifelse(ttb > 180 & ttb <= 360, "180-360", ttb_cat),
-             ttb_cat = ifelse(ttb <= 180, "0-180", ttb_cat)) %>%
-      rename(`Time to TB` = ttb_cat)
-    var_alt_ind <- which(colnames(data_raw_plot) == np_var)
-    colnames(data_raw_plot)[var_alt_ind] <- 'var_alt'
+
+    if(FALSE) {
+      data_raw_plot <- data_mod %>%
+        dplyr::mutate(ttb =  p_dots$iter$ttb_max - (tfmttb * 1e2)) %>%
+        dplyr::mutate(resp = purrr::map_dbl(1:nrow(data_mod), function(i){
+          if(!n_cell_ind) return(data_mod$resp[i])
+          data_mod$resp[i]/data_mod$n_cell[i]*1e2
+        })) %>%
+        dplyr::select(!!np_var, resp, Progressor, ttb) %>%
+        dplyr::mutate(ttb_cat = ifelse(ttb > 360, "360-", ""),
+                      ttb_cat = ifelse(ttb > 180 & ttb <= 360, "180-360", ttb_cat),
+                      ttb_cat = ifelse(ttb <= 180, "0-180", ttb_cat)) %>%
+        dplyr::rename(`Time to TB` = ttb_cat)
+      var_alt_ind <- which(colnames(data_raw_plot) == np_var)
+      colnames(data_raw_plot)[var_alt_ind] <- 'var_alt'
+
+    }
+    data_raw_plot <- data_mod
+    colnames(data_raw_plot)[which(colnames(data_raw_plot) == names(p_dots$var_exp_spline))] <- "var_alt"
 
     p_raw <- p +
       geom_point(data = data_raw_plot,
-                 aes(y = resp, shape = `Time to TB`, alpha = Progressor,
-                     size = Progressor)) + #,
+                 aes(y = resp)) + #alpha = .data[[p_dots$var_int[1]]],
+                     #size = Progressor)) + #,
                  #size = 1.25) +
       scale_shape_manual(values = c("360-" = 6,
                                     "180-360" = 5,
@@ -230,12 +236,11 @@ display <- function(data_raw, data_mod, dir_proj,
                  "p_fit_manual_with_raw_data"))
 
 
-    pipeline::save_objects(obj_list = p_list_res[2],
-                                   dir_proj = dir_proj,
-                                   dir_sub = 'results',
-                                   empty = FALSE,
-                                   width = 19,
-                                   height = 15)
+    pipeline::save_objects(obj_list = p_list_res,
+                           dir_proj = p_dots$dir_stg,
+                           empty = FALSE,
+                           width = 19,
+                           height = 15)
 
 
   }
