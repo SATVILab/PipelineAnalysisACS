@@ -23,7 +23,7 @@ preprocess <- function(data_raw, p_dots, dir_proj){
     )
   data_raw <- data_raw %>%
     add_clinical_data_and_filter(
-      cols_add = cols_to_add_vec[!grepl("^tc~", cols_to_add_vec)],
+      cols_add = cols_to_add_vec[!grepl("^tc~|^none$", cols_to_add_vec)],
       ttb_min = p_dots$ttb_min,
       ttb_max = p_dots$iter$ttb_max
       )

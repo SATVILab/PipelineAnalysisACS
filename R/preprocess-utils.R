@@ -222,6 +222,7 @@ add_tc_assay_data <- function(.data,
       assay,
       "soma" = .add_tc_assay_data_soma,
       "risk6" = .add_tc_assay_data_risk6,
+      "flow_ifng" = .add_tc_assay_data_flow_ifng,
       stop("assay not recognised")
     )
     .data <- .add_tc_assay_data(
@@ -236,6 +237,20 @@ add_tc_assay_data <- function(.data,
     setdiff(colnames(.data), c(cn_orig)),
     setdiff(cn_orig, cols_join))]
 
+}
+
+.add_tc_assay_data_flow_ifng <- function(.data,
+                                    cols_add,
+                                    cols_join) {
+  var_tbl_add <-
+    TuberculomicsCompendium::tidy_wb_cd4p_infgp_cells_hladr_mfi
+
+  var_tbl_add[,cols_add] <- var_tbl_add$CD4IFNg / var_tbl_add$CD4 * 1e2
+  var_tbl_add <- var_tbl_add[,unique(c(cols_join, cols_add))]
+  .data %>%
+    dplyr::inner_join(
+      var_tbl_add,
+      by = cols_join)
 }
 
 .add_tc_assay_data_soma <- function(.data,
