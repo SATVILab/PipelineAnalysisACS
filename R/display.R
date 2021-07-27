@@ -84,6 +84,12 @@ display <- function(data_raw, data_mod, dir_proj,
   # create plots of var_exp
   # -----------------------------
 
+  if (names(p_dots$iter$var_exp_spline) == "cd4_ifng_freq") {
+    eff_obj <- effects::Effect(c("cd4_ifng_freq"),
+                               mod = mod_full,
+                               xlevels = 50)
+  }
+
   if(!is.null(p_dots$var_int) &&
      'Progressor' %in% p_dots$var_int &&
      is.numeric(data_mod[[p_dots$var_int[p_dots$var_int != 'Progressor']]]) &&
@@ -202,6 +208,18 @@ display <- function(data_raw, data_mod, dir_proj,
 
     }
     data_raw_plot <- data_mod
+
+    np_var <- p_dots$var_int[p_dots$var_int != 'Progressor']
+    var_alt_ind <- which(colnames(data_raw_plot) == np_var)
+    colnames(data_raw_plot)[var_alt_ind] <- 'var_alt'
+
+    if(n_cell_ind) {
+      data_raw_plot[, "resp"] <- data_raw_plot[, "resp"] /
+        data_raw_plot[, p_dots$var_offset]
+      if(n_cell_ind) {
+        data_raw_plot[, "resp"] <- data_raw_plot[, "resp"] * 1e2
+      }
+    }
     colnames(data_raw_plot)[which(colnames(data_raw_plot) == names(p_dots$var_exp_spline))] <- "var_alt"
 
     p_raw <- p +
@@ -241,6 +259,12 @@ display <- function(data_raw, data_mod, dir_proj,
                            empty = FALSE,
                            width = 19,
                            height = 15)
+    pipeline::save_objects(obj_list = p_list_res,
+                           dir_proj = p_dots$dir_stg,
+                           empty = FALSE,
+                           width = 19,
+                           height = 15,
+                           gg_device = "pdf")
 
 
   }
