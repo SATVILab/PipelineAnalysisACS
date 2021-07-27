@@ -1,46 +1,30 @@
 #' @export
-plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
+validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
 
-  # ===========================
-  # Check if to rerun
-  # ===========================
-
-  # check if old output is to be ignored
-  ignore_old_output <- switch(as.character(identical(params_dots$ignore_old_output, "")),
-                              "TRUE" = FALSE,
-                              "FALSE" = any(stringr::str_detect('plot_val|all', params_dots$ignore_old_output)))
-
-  # exit fn if content in validation folder and !ignore_old_output
-  if(!ignore_old_output){
-    if(length(list.files((file.path(dir_proj, "validation")))) > 0) return(invisible(TRUE))
-  }
+  theme_set(cowplot::theme_cowplot())
 
   # ===========================
   # Plot validation plots
   # ===========================
 
   # directory to save to
-  dir_save <- file.path(dir_proj, "validation")
-
-  # empty validation folder
-  try(unlink(dir_save, recursive = TRUE),
-      silent = TRUE)
+  dir_save <- p_dots$dir_stg
 
   # object to save plots to
   p_list <- list()
 
   # gather variables to make residuals against
-  var_plot_exp_vec <- c(params_dots$var_exp, names(params_dots$var_exp_spline))
+  var_plot_exp_vec <- c(p_dots$var_exp, names(p_dots$var_exp_spline))
   var_plot_vec <- c(".no_exp_var", var_plot_exp_vec) # adds variable meaning "no variables"
 
   # get residuals
-  var_extract_vec <- c(var_plot_exp_vec, params_dots$var_dep)
-  data_plot <- data_mod %>%
-    select(!!enquo(var_extract_vec)) %>%
-    bind_cols(modutils::get_resid(fit_obj$full))
+  var_extract_vec <- c(var_plot_exp_vec, p_dots$var_dep)
+  data_plot <- data_mod[,var_extract_vec] %>%
+    dplyr::bind_cols(modutils::get_resid(fit_obj$full))
 
   # get fitted values
-  data_plot %<>% bind_cols(modutils::get_pred(fit_obj$full)[,".pred_resp"])
+  data_plot <- data_plot %>%
+    dplyr::bind_cols(modutils::get_pred(fit_obj$full)[,".pred_resp"])
 
   # make univariate residual plots
   # ---------------------------
@@ -49,9 +33,9 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
     if(var == ".no_exp_var"){
       # plot against N(0,1) dbn for clarity
       dens_res_std <- density(data_plot[[".resid_std"]])
-      data_res_std_dens <- tibble(x = dens_res_std$x, y = dens_res_std$y,
+      data_res_std_dens <- tibble::tibble(x = dens_res_std$x, y = dens_res_std$y,
                                   type = "Std residuals")
-      data_norm <- tibble(x = seq(min(data_res_std_dens$x),
+      data_norm <- tibble::tibble(x = seq(min(data_res_std_dens$x),
                                   max(data_res_std_dens$x),
                                   length.out = nrow(data_res_std_dens)),
                           type = "N(0,1)")
@@ -59,7 +43,7 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
       data_plot_no_exp <- data_res_std_dens %>%
         dplyr::bind_rows(data_norm)
       return(list(p = ggplot(data_plot_no_exp) +
-               background_grid(major = 'x') +
+               cowplot::background_grid(major = 'x') +
                geom_line(aes(x = x, y = y, col = type),
                          show.legend = FALSE) +
                labs(x = "Standardised residuals", y = "Density"),
@@ -72,7 +56,7 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
                   cowplot::background_grid(major = 'y') +
                   ggforce::geom_sina(),
                 "FALSE" = p +
-                  background_grid(major = 'xy') +
+                  cowplot::background_grid(major = 'xy') +
                   geom_point() +
                   geom_smooth(se = FALSE)) +
       labs(y = "Standardised residuals")
@@ -83,7 +67,7 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
 
   purrr::walk(seq_along(p_resid_list), function(i){
     p_save <- setNames(list(p_resid_list[[i]]$p), names(p_resid_list)[i])
-    analysispipeline::save_objects(obj_list = p_save,
+    pipeline::save_objects(obj_list = p_save,
                                    dir_proj = dir_save,
                                    height = p_resid_list[[i]]$save["height"],
                                    width = p_resid_list[[i]]$save["width"],
@@ -97,7 +81,7 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
       data_plot[[var]] <- cut(data_plot[[var]], breaks = max(min(5, nrow(data_plot[[var]] - 2)), 1))
     }
     p <- ggplot(data_plot, aes(x = .pred_resp,  y = .resid_std)) +
-      background_grid(major = 'xy') +
+      cowplot::background_grid(major = 'xy') +
       geom_point() +
       geom_smooth() +
       labs(x = "Fitted value", y = "Standardised residuals")
@@ -118,7 +102,7 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
 
   purrr::walk(seq_along(p_resid_vs_fitted), function(i){
     p_save <- setNames(list(p_resid_vs_fitted[[i]]$p), names(p_resid_vs_fitted)[i])
-    analysispipeline::save_objects(obj_list = p_save,
+    pipeline::save_objects(obj_list = p_save,
                                    dir_proj = dir_save,
                                    height = p_resid_vs_fitted[[i]]$save["height"],
                                    width = p_resid_vs_fitted[[i]]$save["width"],
@@ -131,9 +115,9 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
     if(is.numeric(data_plot[[var]])){
       data_plot[[var]] <- cut(data_plot[[var]], breaks = max(min(5, nrow(data_plot[[var]] - 2)), 1))
     }
-    p <- ggplot(data_plot, aes(x = !!sym(params_dots$var_dep),  y = .resid_std)) +
+    p <- ggplot(data_plot, aes(x = !!sym(p_dots$var_dep),  y = .resid_std)) +
       geom_hline(yintercept = 0) +
-      background_grid(major = 'xy') +
+      cowplot::background_grid(major = 'xy') +
       geom_point() +
       geom_smooth(se = FALSE) +
       labs(x = "Fitted value", y = "Standardised residuals")
@@ -154,7 +138,7 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
 
   purrr::walk(seq_along(p_resid_vs_actual), function(i){
     p_save <- setNames(list(p_resid_vs_actual[[i]]$p), names(p_resid_vs_actual)[i])
-    analysispipeline::save_objects(obj_list = p_save,
+    pipeline::save_objects(obj_list = p_save,
                                    dir_proj = dir_save,
                                    height = p_resid_vs_actual[[i]]$save["height"],
                                    width = p_resid_vs_actual[[i]]$save["width"],
@@ -166,9 +150,9 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
     if(is.numeric(data_plot[[var]])){
       data_plot[[var]] <- cut(data_plot[[var]], breaks = max(min(5, nrow(data_plot[[var]] - 2)), 1))
     }
-    p <- ggplot(data_plot, aes(x =  !!sym(params_dots$var_dep),  y = .pred_resp)) +
+    p <- ggplot(data_plot, aes(x =  !!sym(p_dots$var_dep),  y = .pred_resp)) +
       geom_abline(intercept = 0, slope = 1) +
-      background_grid(major = 'xy') +
+      cowplot::background_grid(major = 'xy') +
       geom_point() +
       geom_smooth(se = FALSE) +
       labs(x = "Actual value", y = "Fitted value")
@@ -189,7 +173,7 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
 
   purrr::walk(seq_along(p_fitted_vs_actual), function(i){
     p_save <- setNames(list(p_fitted_vs_actual[[i]]$p), names(p_fitted_vs_actual)[i])
-    analysispipeline::save_objects(obj_list = p_save,
+    pipeline::save_objects(obj_list = p_save,
                                    dir_proj = dir_save,
                                    height = p_fitted_vs_actual[[i]]$save["height"],
                                    width = p_fitted_vs_actual[[i]]$save["width"],
@@ -202,21 +186,21 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
 
   var_exp_vec <- setdiff(var_plot_vec, ".no_exp_var")
   var_exp_list <- as.list(var_exp_vec) %>% append(list(var_exp_vec))
-  var_spline_vec <- names(params_dots$var_exp_spline)
-  knot_list <- switch(as.character(is.null(params_dots$var_exp_spline)),
+  var_spline_vec <- names(p_dots$var_exp_spline)
+  knot_list <- switch(as.character(is.null(p_dots$var_exp_spline)),
                       "TRUE" = list(),
-                      "FALSE" = map(params_dots$var_exp_spline, function(x){
+                      "FALSE" = map(p_dots$var_exp_spline, function(x){
                         if('knots' %in% names(x$params)) return(x$params$knots)
                         NULL
                       }) %>%
-                        setNames(names(params_dots$var_exp_spline)))
+                        setNames(names(p_dots$var_exp_spline)))
 
   break_list <- map(var_exp_vec, function(var){
     if(is.character(data_mod[[var]]) || is.logical(data_mod[[var]])) return(unique(data_mod[[var]]))
     if(is.factor(data_mod[[var]])) return(levels(data_mod[[var]]))
     if(var %in% var_spline_vec){
-      if('knots' %in% names(params_dots$var_exp_spline[[var]]$params)){
-        break_vec <- c(min(data_mod[[var]]), params_dots$var_exp_spline[[var]]$params$knots,
+      if('knots' %in% names(p_dots$var_exp_spline[[var]]$params)){
+        break_vec <- c(min(data_mod[[var]]), p_dots$var_exp_spline[[var]]$params$knots,
                        max(data_mod[[var]]))
         break_vec <- unique(break_vec)
         range_len <- diff(range(break_vec))
@@ -237,9 +221,9 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
   #browser()
   kw_obj <- map_df(var_exp_list, function(var_exp){
     #print(var_exp)
-    resp_vec <- data_mod[[params_dots$var_dep]]
-    if(!is.null(params_dots$var_offset)){
-      resp_vec <- resp_vec/data_mod[[params_dots$var_offset]]
+    resp_vec <- data_mod[[p_dots$var_dep]]
+    if(!is.null(p_dots$var_offset)){
+      resp_vec <- resp_vec/data_mod[[p_dots$var_offset]]
     }
     for(i in seq_along(var_exp)){
       if(i == 1){
@@ -260,13 +244,13 @@ plot_val <- function(data_raw, data_mod, dir_proj, params_dots, fit_obj){
     try(kw_obj <- kruskal.test(resp_vec, grp_vec), silent = TRUE)
     var_print <- paste0(var_exp, collapse = "; ")
 
-    out_tbl <- try(tibble(var = var_print, stat = kw_obj$statistic, df = length(unique(grp_vec)) - 1,
+    out_tbl <- try(tibble::tibble(var = var_print, stat = kw_obj$statistic, df = length(unique(grp_vec)) - 1,
            p = kw_obj$p.value))
     if(class(out_tbl) == 'try-error') return(tibble(var = NA_character_, stat = NA_real_, df = NA_integer_))
     out_tbl
   })
 
-  analysispipeline::save_objects(obj_list = list(kw = kw_obj),
+  pipeline::save_objects(obj_list = list(kw = kw_obj),
                                  dir_proj = dir_save,
                                  empty = FALSE)
   invisible(TRUE)

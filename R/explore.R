@@ -2,17 +2,10 @@
 
 #' @title Make exploratory plots
 #' @export
-plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
+explore <- function(data_raw, data_mod, dir_proj, p_dots){
 
-  # check if old output is to be ignored
-  ignore_old_output <- switch(as.character(identical(params_dots$ignore_old_output, "")),
-                              "TRUE" = FALSE,
-                              "FALSE" = any(stringr::str_detect('plot_exp|all', params_dots$ignore_old_output)))
 
-  # exit fn if content in validation folder and !ignore_old_output
-  if(!ignore_old_output){
-    if(length(list.files((file.path(dir_proj, "exploration")))) > 0) return(invisible(TRUE))
-  }
+  theme_set(cowplot::theme_cowplot())
 
   # =============================
   # Preparation
@@ -23,26 +16,26 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
   # -------------------
   # get max_ttb
   max_ttb <- get_max_ttb(data_mod = data_mod, data_raw = data_raw,
-                         params_dots = params_dots)
+                         p_dots = p_dots)
 
   # get indicator if proportions should be plotted
-  prop_ind <- params_dots$response_type == 'count' && params_dots$assay %in% c("cytof", "cytof_ag_flowsom")
+  prop_ind <- p_dots$response_type == 'count' && p_dots$assay %in% c("cytof", "cytof_ag_flowsom")
 
   # font size
   y_axis_title_font_size <- 4
   cowplot_theme_font_size <- 12
 
   # y-axis labels
-  if(params_dots$assay %in% c('cytof', 'cytof-faust', 'cytof_flowsom')){
-    if(params_dots$response_type == 'count'){
-      y_lab <- ifelse(str_detect(params_dots$assay, 'faust'), 'Frequency',
-                      paste0(params_dots$stim, "-induced cytokine+ frequency"))
-    } else if(params_dots$response_type == 'compass'){
-      y_lab <- paste0("Probability of response to ", params_dots$stim)
-    } else if(params_dots$response_type == 'hladr_med_diff'){
-      y_lab <- paste0("Median difference in HLADR expression level of", params_dots$stim, "+ cells")
+  if(p_dots$assay %in% c('cytof', 'cytof-faust', 'cytof_flowsom')){
+    if(p_dots$response_type == 'count'){
+      y_lab <- ifelse(str_detect(p_dots$assay, 'faust'), 'Frequency',
+                      paste0(p_dots$stim, "-induced cytokine+ frequency"))
+    } else if(p_dots$response_type == 'compass'){
+      y_lab <- paste0("Probability of response to ", p_dots$stim)
+    } else if(p_dots$response_type == 'hladr_med_diff'){
+      y_lab <- paste0("Median difference in HLADR expression level of", p_dots$stim, "+ cells")
     }
-  } else y_lab <- paste0(params_dots$resp_type, " response")
+  } else y_lab <- paste0(p_dots$resp_type, " response")
 
   # data for plot
   # -------------------
@@ -61,43 +54,43 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
 
 
 
-  if(params_dots$assay == 'cytof_ag_flowsom'){
+  if(p_dots$assay == 'cytof_ag_flowsom'){
 
-    if(!dir.exists(file.path(dir_proj, 'exploration'))) dir.create(file.path(dir_proj, 'exploration'), recursive = TRUE)
+    if(!dir.exists(file.path(dir_proj, 'exp'))) dir.create(file.path(dir_proj, 'exp'), recursive = TRUE)
 
-    path_in <- file.path(params_dots$dir_plots, paste0('p markers c', data_raw$clust[1], '.png'))
+    path_in <- file.path(p_dots$dir_plots, paste0('p markers c', data_raw$clust[1], '.png'))
     file.exists(path_in)
-    path_out <- file.path(dir_proj, 'exploration', "Markers by cluster.png")
+    path_out <- file.path(dir_proj, 'exp', "Markers by cluster.png")
     file.copy(path_in, path_out, overwrite = TRUE)
 
-    path_in <- file.path(params_dots$dir_plots, 'p_heatmap_all.png')
+    path_in <- file.path(p_dots$dir_plots, 'p_heatmap_all.png')
     file.exists(path_in)
-    path_out <- file.path(dir_proj, 'exploration', "Cluster heat map - all.png")
+    path_out <- file.path(dir_proj, 'exp', "Cluster heat map - all.png")
     file.copy(path_in, path_out, overwrite = TRUE)
 
-    path_in <- file.path(params_dots$dir_plots, 'p_heatmap_filter.png')
+    path_in <- file.path(p_dots$dir_plots, 'p_heatmap_filter.png')
     file.exists(path_in)
-    path_out <- file.path(dir_proj, 'exploration', "Cluster heat map - stable.png")
+    path_out <- file.path(dir_proj, 'exp', "Cluster heat map - stable.png")
     file.copy(path_in, path_out, overwrite = TRUE)
 
-    #path_in <- file.path(params_dots$dir_plots, paste0('tsne - cluster ',data_raw$clust[1], '.png'))
-    #path_out <- file.path(dir_proj, 'exploration', "Cluster on t-SNE.png")
+    #path_in <- file.path(p_dots$dir_plots, paste0('tsne - cluster ',data_raw$clust[1], '.png'))
+    #path_out <- file.path(dir_proj, 'exp', "Cluster on t-SNE.png")
     #file.copy(path_in, path_out, overwrite = TRUE)
 
-    path_in <- file.path(str_replace(params_dots$dir_plots, paste0("all_u-", data_raw$stim[1]), "all_u-all"),
+    path_in <- file.path(str_replace(p_dots$dir_plots, paste0("all_u-", data_raw$stim[1]), "all_u-all"),
                          paste0('umap_clust_grid.png'))
     file.exists(path_in)
-    path_out <- file.path(dir_proj, 'exploration', "UMAP grid.png")
+    path_out <- file.path(dir_proj, 'exp', "UMAP grid.png")
     file.copy(path_in, path_out, overwrite = TRUE)
 
-    path_in <- file.path(params_dots$dir_plots, paste0("p ", params_dots$resp_type, " prog c ", data_raw$clust[1], " fixed.png"))
+    path_in <- file.path(p_dots$dir_plots, paste0("p ", p_dots$resp_type, " prog c ", data_raw$clust[1], " fixed.png"))
     file.exists(path_in)
-    path_out <- file.path(dir_proj, 'exploration', "Progressor boxplot - fixed.png")
+    path_out <- file.path(dir_proj, 'exp', "Progressor boxplot - fixed.png")
     file.copy(path_in, path_out, overwrite = TRUE)
 
-    path_in <- file.path(params_dots$dir_plots, paste0("p ", params_dots$resp_type, " prog c ", data_raw$clust[1], " free.png"))
+    path_in <- file.path(p_dots$dir_plots, paste0("p ", p_dots$resp_type, " prog c ", data_raw$clust[1], " free.png"))
     file.exists(path_in)
-    path_out <- file.path(dir_proj, 'exploration', "Progressor boxplot - free.png")
+    path_out <- file.path(dir_proj, 'exp', "Progressor boxplot - free.png")
     file.copy(path_in, path_out, overwrite = TRUE)
   }
 
@@ -124,7 +117,7 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
     cowplot::theme_cowplot(font_size = cowplot_theme_font_size)
 
   # add hor line at y=0
-  if(params_dots$assay %in% c('cytof')){
+  if(p_dots$assay %in% c('cytof')){
     p_box <- p_box +
       geom_hline(yintercept = 0, linetype = 'dotted', size = 1,
                  col = 'gray50')
@@ -169,10 +162,10 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
   }
 
   # transform if required
-  if('trans_y' %in% names(params_dots)){
+  if('trans_y' %in% names(p_dots)){
     p_box <- p_box +
       scale_y_continuous(name = y_lab,
-                         trans = params_dots$trans_y)
+                         trans = p_dots$trans_y)
   }
 
   # add grid
@@ -187,7 +180,7 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
   # filter to only choose samples closer to TB
   data_plot_long <- data_plot %>%
     filter(Progressor == 'yes') %>%
-    left_join(params_dots$clinical_data %>%
+    left_join(p_dots$clinical_data %>%
                 group_by(SampleID) %>%
                 slice(1) %>%
                 ungroup() %>%
@@ -204,7 +197,7 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
     cowplot::theme_cowplot(font_size = cowplot_theme_font_size)
 
   # add hor line at y=0
-  if(params_dots$assay %in% c('cytof')){
+  if(p_dots$assay %in% c('cytof')){
     p_long <- p_long +
       geom_hline(yintercept = 0, linetype = 'dotted', size = 1,
                  col = 'gray50')
@@ -236,10 +229,10 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
   }
 
   # transform if required
-  if('trans_y' %in% names(params_dots)){
+  if('trans_y' %in% names(p_dots)){
     p_long <- p_long +
       scale_y_continuous(name = y_lab,
-                         trans = params_dots$trans_y)
+                         trans = p_dots$trans_y)
   }
 
   # add titles
@@ -264,7 +257,7 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
   # filter to only choose samples closer to TB
   data_plot_long <- data_plot %>%
     filter(Progressor == 'no') %>%
-    left_join(params_dots$clinical_data %>%
+    left_join(p_dots$clinical_data %>%
                 group_by(SampleID) %>%
                 slice(1) %>%
                 ungroup() %>%
@@ -281,7 +274,7 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
     cowplot::theme_cowplot(font_size = cowplot_theme_font_size)
 
   # add hor line at y=0
-  if(params_dots$assay %in% c('cytof')){
+  if(p_dots$assay %in% c('cytof')){
     p_long <- p_long +
       geom_hline(yintercept = 0, linetype = 'dotted', size = 1,
                  col = 'gray50')
@@ -313,10 +306,10 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
   }
 
   # transform if required
-  if('trans_y' %in% names(params_dots)){
+  if('trans_y' %in% names(p_dots)){
     p_long <- p_long +
       scale_y_continuous(name = y_lab,
-                         trans = params_dots$trans_y)
+                         trans = p_dots$trans_y)
   }
 
   # add titles
@@ -352,20 +345,20 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
   # Cytokine combinations - box plot
   # ===========================
 
-  if(params_dots$assay %in% c('cytof') && params_dots$response_type %in% 'count' && !params_dots$phenotype ){
+  if(p_dots$assay %in% c('cytof') && p_dots$response_type %in% 'count' && !p_dots$phenotype ){
 
     # data for plot
     # -------------------
 
-    data_plot <- params_dots$stats_combn_tbl %>%
-      mutate(dataset = params_dots$dataset_name,
-             cyt_response_type_grp = params_dots$cyt_response_type_grp_curr)
+    data_plot <- p_dots$stats_combn_tbl %>%
+      mutate(dataset = p_dots$dataset_name,
+             cyt_response_type_grp = p_dots$cyt_response_type_grp_curr)
 
     # filter
-    if(length(params_dots$filter) != 0){
-      for(i in seq_along(params_dots$filter)){
-        var <- names(params_dots$filter)[i]
-        val <- params_dots$filter[[i]]
+    if(length(p_dots$filter) != 0){
+      for(i in seq_along(p_dots$filter)){
+        var <- names(p_dots$filter)[i]
+        val <- p_dots$filter[[i]]
         data_plot <- data_plot[data_plot[[var]] %in% val,]
       }
     }
@@ -462,14 +455,14 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
         cowplot::theme_cowplot(font_size = cowplot_theme_font_size)
 
       # add hor line at y=0
-      if(params_dots$assay %in% c('cytof')){
+      if(p_dots$assay %in% c('cytof')){
         p_box <- p_box +
           geom_hline(yintercept = 0, linetype = 'dotted', size = 1,
                      col = 'gray50')
       }
 
       # add points
-      if(params_dots$assay %in% 'cytof'){
+      if(p_dots$assay %in% 'cytof'){
         p_box <- p_box + ggforce::geom_sina(aes(size = n_cell),
                                             alpha = 0.4)
       } else p_box <- p_box + ggforce::geom_sina(alpha = 0.8)
@@ -542,12 +535,12 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
   # COMPASS
   # ===========================
 
-  if(params_dots$response_type == 'compass'){
+  if(p_dots$response_type == 'compass'){
 
 
-    data_meta <- params_dots$compass_obj$data$meta
+    data_meta <- p_dots$compass_obj$data$meta
     #data_meta_orig <- data_meta
-    data_meta_add <- params_dots$clinical_data %>%
+    data_meta_add <- p_dots$clinical_data %>%
       filter(SampleID %in% paste0(data_meta$SampleID)) %>%
       group_by(SampleID) %>%
       slice(1) %>%
@@ -576,20 +569,20 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
       left_join(data_meta_add,
                 by = c("SubjectID", "VisitType"))
 
-    params_dots$compass_obj$data$meta <- data_meta
+    p_dots$compass_obj$data$meta <- data_meta
 
-    fn_p <- stringr::str_remove(params_dots$html_title, ".html")
+    fn_p <- stringr::str_remove(p_dots$html_title, ".html")
 
     png(file.path(dir_proj, 'exploration', paste0(fn_p, ".png")), width = 400, height = 1000)
-    try(suppressMessages(plot(params_dots$compass_obj, 'Progressor: Time to TB')))
+    try(suppressMessages(plot(p_dots$compass_obj, 'Progressor: Time to TB')))
     dev.off()
 
     pdf(file.path(dir_proj, 'exploration', paste0(fn_p, ".pdf")), width = 6, height = 10)
-    try(suppressMessages(plot(params_dots$compass_obj, 'Progressor: Time to TB')))
+    try(suppressMessages(plot(p_dots$compass_obj, 'Progressor: Time to TB')))
     dev.off()
   }
 
-  if('sig6gene_CorScore' %in% params_dots$conf){
+  if('sig6gene_CorScore' %in% p_dots$conf){
     p_box <- ggplot(data_mod, aes(x = Progressor, y = sig6gene_CorScore, col = Progressor)) +
       background_grid(major = 'xy') +
       geom_boxplot() +
@@ -597,7 +590,7 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
       scale_colour_manual(values = c("yes" = "orange", "no" = "dodgerblue")) +
       labs(y = "RISK6 score")
 
-    if(params_dots$assay %in% c('cytof', 'cytof-faust', 'cytof_flowsom') && params_dots$response_type == 'count'){
+    if(p_dots$assay %in% c('cytof', 'cytof-faust', 'cytof_flowsom') && p_dots$response_type == 'count'){
       data_plot_vs_resp <- data_mod %>% mutate(resp = resp/n_cell * 1e2)
     } else data_plot_vs_resp <- data_mod
     p_verse_resp <- ggplot(data_plot_vs_resp, aes(x = resp, y = sig6gene_CorScore, col = Progressor)) +
@@ -609,7 +602,7 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
 
     p_long_prog <- ggplot(data_mod %>%
                             filter(Progressor == 'yes') %>%
-                            mutate(ttb = params_dots$max_ttb - tfmttb * ifelse(params_dots$scale, 1e2, 1)),
+                            mutate(ttb = p_dots$max_ttb - tfmttb * ifelse(p_dots$scale, 1e2, 1)),
                           aes(x = ttb, y = sig6gene_CorScore, col = Progressor)) +
       background_grid(major = 'xy') +
       geom_point() +
@@ -641,8 +634,8 @@ plot_exp <- function(data_raw, data_mod, dir_proj, params_dots){
   }
 
   # save cluster stability, if available
-  if('stability_clust' %in% names(params_dots)){
-    saveRDS(params_dots$stability_clust, file.path(dir_proj, 'exploration', 'stability.rds'))
+  if('stability_clust' %in% names(p_dots)){
+    saveRDS(p_dots$stability_clust, file.path(dir_proj, 'exploration', 'stability.rds'))
   }
 
 

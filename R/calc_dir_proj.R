@@ -16,19 +16,67 @@ calc_dir_proj <- function(dir_base, iter = list(), ...) {
 }
 
 get_folder <- function(nm, value) {
-  switch(nm,
-    "max_ttb" = as.character(value),
+  out <- switch(nm,
+    "ttb_max" = as.character(value),
     "conf" = ifelse(
-      identical(value, "none"), "no_conf", paste0(value, collapse = "")
+      identical(value, "none"), "no_conf", paste0(
+        stringr::str_sub(value, end = min(nchar(value), 3)),
+                         collapse = "")
       ),
-    "rem_il6" = ifelse(value, "il6_exc", "il6_inc"),
+    "rem_il6" = ifelse(value, "il6_e", "il6_i"),
     "wins" = ifelse(value, "wins", "wins_n"),
-    "equi_d_knots" = ifelse(value, "equi_d", "equi_d_n"),
+    "equi_d_knots" = ifelse(value, "eq_d", "eq_d_n"),
     "ds" =,
     "dataset" = value,
     "stim" = value,
     "cyt_response_type" = value,
+    "var_offset" = paste0("o-", stringr::str_sub(value, end = min(nchar(value), 2)) %>%
+                            paste0("_")),
     "cyt_response_type_grp" = value,
-    stop(paste0("name ", nm, "not recognised in calc_dir_proj"))
+    "var_exp" = paste0("exp-", paste0(
+      stringr::str_sub(value, end = min(nchar(value), 5)),
+      collapse = "")),
+    "var_exp_spline" = paste0(
+      "exp_s-",
+      paste0(purrr::map_chr(seq_along(value), function(i) {
+        nm_curr <- names(value)[i]
+        out <- stringr::str_sub(nm_curr, end = min(6, nchar(nm_curr)))
+        fn_add <- ifelse(
+          !is.null(value[[i]]$fn),
+          paste0("_", value[[i]]$fn), "")
+        out <- paste0(out, fn_add)
+        params <- value[[i]]$params
+        if (!is.null(params)) {
+          params_add <- purrr::map_chr(seq_along(params), function(j) {
+            nm_curr <- names(params)[j]
+            val <- params[[j]]
+            switch(
+              nm_curr,
+              "knots" = paste0(
+                  "_k",
+                  switch(
+                    as.character(length(unique(diff(val)))),
+                    "0" = "0",
+                    "1" = paste0("e_", length(val)),
+                    paste0("en_",  length(val))
+                  )
+                ),
+              "Boundary.knots" = paste0("_b", length(val)),
+              "df" =  paste0("df", val)
+            )
+          })
+          params_add <- paste0(params_add, collapse = "")
+          if(length(params_add) > 0) out <- paste0(out, params_add)
+        }
+        out}),
+        collapse = "_")),
+    stop(paste0("name ", nm, " not recognised in calc_dir_proj"))
   )
+  if(is.na(out)) stop(paste0("NA returned for ", nm, " when value is ",
+                             paste0(value, "/")))
+  if(length(out) > 1) stop(paste0("Folder of length > 1 returned for ", nm,
+                                  " when value is ",
+                                  paste0(value, "/")))
+  out
 }
+

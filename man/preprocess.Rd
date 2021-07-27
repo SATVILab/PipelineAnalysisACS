@@ -4,7 +4,7 @@
 \alias{preprocess}
 \title{Pre-process data}
 \usage{
-preprocess(data_raw, params_dots, dir_proj)
+preprocess(data_raw, p_dots, dir_proj)
 }
 \description{
 Pre-process data
