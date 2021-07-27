@@ -10,9 +10,14 @@
 #' @export
 extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
 
-  if (identical(class(fit_obj), "try-error")) {
+  if (identical(class(fit_obj$full), "try-error")) {
     return(invisible(TRUE))
   }
+  fit_obj <- fit_obj[
+    purrr::map_lgl(
+      fit_obj,
+      function(x) !identical(class(x), "try-error"))
+    ]
 
   # prep
   # -------------
