@@ -37,6 +37,7 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
   # variables to test for in wald test
   var_test_list <- list(p_dots$var_exp, names(p_dots$var_exp_spline),
                        c(p_dots$var_exp, names(p_dots$var_exp_spline)))
+  var_test_list <- var_test_list[!vapply(var_test_list, is.null, logical(1))]
 
   # get Wald stats
   wald_tbl <- modutils::test_wald(
