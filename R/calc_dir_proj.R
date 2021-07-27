@@ -40,6 +40,9 @@ get_folder <- function(nm, value) {
       "exp_s-",
       paste0(purrr::map_chr(seq_along(value), function(i) {
         nm_curr <- names(value)[i]
+        if(grepl("^tc~", nm_curr)) {
+          nm_curr <- stringr::str_split(nm_curr, "~")[[1]][3]
+        }
         out <- stringr::str_sub(nm_curr, end = min(6, nchar(nm_curr)))
         fn_add <- ifelse(
           !is.null(value[[i]]$fn),

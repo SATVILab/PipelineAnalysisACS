@@ -200,66 +200,87 @@ add_clinical_data_and_filter <- function(.data,
 
 #' @title Add assay data
 add_tc_assay_data <- function(.data,
-                              assay,
-                              cols) {
+                              cols_add,
+                              cols_join) {
 
+  cn_orig <- colnames(.data)
 
-  if(any(purrr::map_lgl(p_dots$conf, function(x) stringr::str_detect(x, "sig6gene_CorScore")))){
-    data_raw %<>%
-      dplyr::left_join(TuberculomicsCompendium::signature_6gene,
-                       by = c("SubjectID", "VisitType")) %>%
-      dplyr::select(dataset:Winter, sig6gene_CorScore, PreviousDiagnosisOfTB,
-                    everything())
-    data_raw %<>%
-      dplyr::filter(!is.na(sig6gene_CorScore))
+  if (length(cols_add) == 0) return(.data)
+
+  cols_add_split <- stringr::str_split(cols_add, "~")
+  assay_vec <- purrr::map_chr(cols_add_split, function(x) x[1]) %>%
+    unique
+  assay_to_cols_add <- purrr::map(assay_vec, function(x) {
+    purrr::map_chr(cols_add_split, function(x) x[2])[
+      purrr::map_chr(cols_add_split, function(x) x[1]) == x
+    ]
+  }) %>%
+    setNames(assay_vec)
+
+  for (assay in assay_vec) {
+    .add_tc_assay_data <- switch(
+      assay,
+      "soma" = .add_tc_assay_data_soma,
+      "risk6" = .add_tc_assay_data_risk6,
+      stop("assay not recognised")
+    )
+    .data <- .add_tc_assay_data(
+      .data = .data,
+      cols_add = assay_to_cols_add[[assay]],
+      cols_join = cols_join
+      )
   }
 
-  if(names(p_dots$var_exp_spline) != "tfmttb"){
-    if(names(p_dots$var_exp_spline) %in% TuberculomicsCompendium::soma_data_tidy$Soma_Target){
-      var_tbl_add <- TuberculomicsCompendium::soma_data_tidy %>%
-        dplyr::filter(Soma_Target == names(p_dots$var_exp_spline)) %>%
-        dplyr::group_by(SubjectID, VisitType) %>%
-        dplyr::slice(1) %>%
-        dplyr::ungroup() %>%
-        dplyr::select(SubjectID, VisitType, Soma_TransformedReadout)
-      names(var_tbl_add) <- c(names(var_tbl_add)[-ncol(var_tbl_add)], names(p_dots$var_exp_spline))
-      data_raw %<>%
-        inner_join(var_tbl_add ,
-                   by = c("SubjectID", "VisitType"))
-    } else if(names(p_dots$var_exp_spline) == "risk6"){
-      var_tbl_add <- TuberculomicsCompendium::signature_6gene %>%
-        dplyr::select(SubjectID, VisitType, sig6gene_CorScore)
-      names(var_tbl_add) <- c(names(var_tbl_add)[-ncol(var_tbl_add)], names(p_dots$var_exp_spline))
-      data_raw %<>%
-        inner_join(var_tbl_add,
-                   by = c("SubjectID", "VisitType"))
-    } else if(names(p_dots$var_exp_spline) == "risk11"){
-      var_tbl_add <- TuberculomicsCompendium::signature_11gene %>%
-        dplyr::select(SubjectID, VisitType, sig11gene_CorScore)
-      names(var_tbl_add) <- c(names(var_tbl_add)[-ncol(var_tbl_add)], names(p_dots$var_exp_spline))
-      data_raw %<>%
-        inner_join(var_tbl_add,
-                   by = c("SubjectID", "VisitType"))
-    } else if(names(p_dots$var_exp_spline) == "hladr"){
-      var_tbl_add <- dataset_list[[p_dots$dataset_name]]$hladr %>%
-        dplyr::mutate(SubjectID = stringr::str_sub(fcs, end = 6),
-                      VisitType = purrr::map_chr(fcs, function(fcs_ind){
-                        fcs_ind <- stringr::str_sub(fcs_ind, start = 8)
-                        first_us_loc <- stringr::str_locate(fcs_ind, "_")[1,"start"][[1]]
-                        stringr::str_sub(fcs_ind, end = first_us_loc - 1)
-                      })) %>%
-        dplyr::select(SubjectID, VisitType, stim, hladr_med_diff)
-
-      names(var_tbl_add) <- c(names(var_tbl_add)[-ncol(var_tbl_add)], names(p_dots$var_exp_spline))
-
-      data_raw %<>%
-        inner_join(var_tbl_add,
-                   by = c("SubjectID", "VisitType", "stim"))
-    }
-
-  }
+  .data[, c(
+    cols_join,
+    setdiff(colnames(.data), c(cn_orig)),
+    setdiff(cn_orig, cols_join))]
 
 }
+
+.add_tc_assay_data_soma <- function(.data,
+                                    cols_add,
+                                    cols_join) {
+
+  var_tbl_add <- TuberculomicsCompendium::soma_data_tidy %>%
+    dplyr::filter(Soma_Target %in% cols_add) %>%
+    dplyr::group_by_at(c(cols_join, "Soma_Target")) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup()
+  var_tbl_add <- var_tbl_add %>%
+    tidyr::pivot_wider(
+      id_cols = cols_join,
+      names_from = "Soma_Target",
+      values_from = "Soma_TransformedReadout"
+    )
+
+  var_tbl_add <- var_tbl_add[, c(cols_join, cols_add)]
+  new_col_vec <- setdiff(colnames(var_tbl_add), cols_join)
+
+  .data <- .data %>%
+    dplyr::inner_join(
+      var_tbl_add,
+      by = cols_join)
+
+  .data[, c(
+    cols_join,
+    new_col_vec,
+    setdiff(colnames(.data),
+            c(cols_join, new_col_vec)))]
+}
+
+.add_tc_assay_data_risk6 <- function(.data,
+                                     cols_add,
+                                     cols_join) {
+  .data <- .data %>%
+    dplyr::inner_join(
+      TuberculomicsCompendium::signature_6gene,
+      by = cols_join
+    ) %>%
+    dplyr::rename(risk6 = sig6gene_CorScore)
+  .data[,c(cols_join, setdiff(colnames(.data), cols_join))]
+}
+
 
 #' @title Scale variables for modelling
 scale_var <- function(.data, cols = NULL) {
