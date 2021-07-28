@@ -21,6 +21,7 @@ get_folder <- function(nm, value) {
                   "FALSE" = value)
   out <- switch(nm,
     "ttb_max" = as.character(value),
+    "var_conf" = ,
     "conf" = ifelse(
       identical(value[[1]], "none"), "no_conf", paste0(
         stringr::str_sub(value[[1]], end = min(nchar(value[[1]]), 3)),
