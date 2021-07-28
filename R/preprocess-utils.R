@@ -165,7 +165,10 @@ add_clinical_data_and_filter <- function(.data,
     clinical_data_add <- clinical_data_add %>%
       dplyr::mutate(timeToTBFromVisit = pmax(.data$timeToTBFromVisit, ttb_min))
   }
-
+  ttb_max <- ifelse(is.na(ttb_max),
+                    max(clinical_data_add$timeToTBFromVisit,
+                        na.rm = TRUE),
+                    ttb_max)
   clinical_data_add <- clinical_data_add %>%
     dplyr::mutate(tfmttb = ifelse(Progressor == "no", # make zero non-progressor
                                   0,
