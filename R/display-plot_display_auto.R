@@ -29,7 +29,7 @@ plot_display_auto <- function(mod, data_mod, var, fn, dir_save, height = NULL, w
   if (is.null(height)) height <- ceiling(n_var / 2) * 8
   if (is.null(width)) width <- ifelse(n_var >= 2, 19, 9.5)
 
-  png(filename = file.path(p_dots$dir_stg, "p_fit_auto.png"), units = 'cm',
+  png(filename = file.path(dir_save, "p_fit_auto.png"), units = 'cm',
       height = height, width = width, res = 300,
       pointsize = 10)
 
