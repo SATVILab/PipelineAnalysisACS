@@ -6,8 +6,9 @@ calc_dir_proj <- function(dir_base, iter = list(), ...) {
   dir_sub <- purrr::map_chr(
     seq_along(d_list),
     function(i) {
-      get_folder(nm = names(d_list)[i],
+      out <- get_folder(nm = names(d_list)[i],
                  value = d_list[[i]])
+      out
     }
   ) %>%
     paste0(collapse = "/")
@@ -27,6 +28,7 @@ get_folder <- function(nm, value) {
         stringr::str_sub(value[[1]], end = min(nchar(value[[1]]), 3)),
                          collapse = "")
       ),
+    "pkg" = value,
     "rem_il6" = ifelse(value, "il6_e", "il6_i"),
     "wins" = ifelse(value, "wins", "wins_n"),
     "equi_d_knots" = ifelse(value, "eq_d", "eq_d_n"),
