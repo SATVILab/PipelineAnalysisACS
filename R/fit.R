@@ -58,6 +58,7 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj){
                                                            switch(p_dots$family,
                                                                   'beta' = 'beta_family()',
                                                                   'gamma' = ,
+                                                                  "nb" = "nbinom2",
                                                                   'Gamma' = "Gamma(link = 'log')",
                                                                   stop("family does not match one of the available ones for glmmTMB"))),
                                         stop("pkg not one of the available pkg's")),
