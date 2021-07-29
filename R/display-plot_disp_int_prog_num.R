@@ -52,7 +52,23 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
   # stretch non-progressor estimates
   # across range of numeric variable
   if (var_cat == "Progressor" && var_num == "tfmttb") {
+    eff_tbl_prog <- eff_tbl %>%
+      dplyr::filter(Progressor == 'yes')
 
+    eff_tbl_ctrl <- purrr::map_df(eff_tbl_prog$tfmttb, function(x){
+      eff_tbl %>%
+        dplyr::filter(Progressor == 'no',
+                      tfmttb == 0) %>%
+        dplyr::mutate(tfmttb = .env$x)
+    })
+
+    eff_tbl <- eff_tbl_prog %>%
+      dplyr::bind_rows(eff_tbl_ctrl)
+
+    ttb_max <- rlang::caller_env()$p_dots$iter$ttb_max
+
+    eff_tbl <- eff_tbl %>%
+      dplyr::mutate(tfmttb = ttb_max  - (tfmttb * 1e2))
   }
 
   p <- ggplot(eff_tbl, aes(x = .data[[var_num]], y = fit,
@@ -98,6 +114,13 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
   if (!is.null(var_offset)) {
     plot_tbl_raw[, var_dep] <- plot_tbl_raw[, var_dep] / plot_tbl_raw[, var_offset]
     if (n_cell_ind) plot_tbl_raw[, var_dep] <- plot_tbl_raw[, var_dep] * 1e2
+  }
+
+  if (var_cat == "Progressor" && var_num == "tfmttb") {
+    ttb_max <- rlang::caller_env()$p_dots$iter$ttb_max
+
+    plot_tbl_raw <- plot_tbl_raw %>%
+      dplyr::mutate(tfmttb = ttb_max  - (tfmttb * 1e2))
   }
 
   p_raw <- p +
