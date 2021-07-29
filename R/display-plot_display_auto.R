@@ -21,6 +21,8 @@
 #' automatically assigns the data to the global environment
 #' to an object with the correct name, and restores
 #' any object "overwritten" after the function is completed running.
+#'
+#' @export
 plot_display_auto <- function(mod, data_mod, var, fn, dir_save, height = NULL, width = NULL) {
 
   if (is.null(height) || is.null(width)) {
