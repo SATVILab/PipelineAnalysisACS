@@ -3,7 +3,7 @@ filter_using_list <- function(.data, filter_list) {
   for (i in seq_along(filter_list)) {
     nm <- names(filter_list)[i]
     value <- filter_list[[i]]
-    .data <- .data[.data[[nm]] %in% value,]
+    .data <- .data[.data[[nm]] %in% value, ]
   }
   .data
 }
@@ -319,4 +319,16 @@ scale_var <- function(.data, cols = NULL) {
                       sd(DaysSinceEntry))
   }
   .data
+}
+
+
+remove_tc_assay_from_exp_s <- function(p_dots) {
+  nm_vec <- names(p_dots$var_exp_spline)
+  for (i in seq_along(nm_vec)) {
+    nm <- nm_vec[i]
+    if(!grepl("^tc~", nm)) next
+    nm_vec[i] <- stringr::str_split(nm, "~")[[1]][3]
+  }
+  names(p_dots$var_exp_spline) <- nm_vec
+  p_dots
 }

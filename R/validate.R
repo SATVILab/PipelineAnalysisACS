@@ -7,6 +7,8 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
   # Plot validation plots
   # ===========================
 
+  p_dots <- remove_tc_assay_from_exp_s(p_dots)
+
   # directory to save to
   dir_save <- p_dots$dir_stg
 

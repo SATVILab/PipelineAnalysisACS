@@ -19,10 +19,15 @@ display <- function(data_raw, data_mod, dir_proj,
       function(x) !identical(class(x), "try-error"))
   ]
 
+  p_dots <- remove_tc_assay_from_exp_s(p_dots)
+
   theme_set(cowplot::theme_cowplot())
 
   library(splines)
-  on.exit(detach("package:splines", unload = TRUE))
+  on.exit(suppressWarnings(try(
+    detach("package:splines", unload = TRUE),
+    silent = TRUE
+    )))
 
 
   #return(invisible(TRUE))

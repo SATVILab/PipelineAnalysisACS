@@ -40,15 +40,6 @@ preprocess <- function(data_raw, p_dots, dir_proj){
       cols_add = cols_to_add_vec_tc,
       cols_join = c("SubjectID", "VisitType")
     )
-  nm_vec <- names(p_dots$var_exp_spline)
-  for (i in seq_along(nm_vec)) {
-    nm <- nm_vec[i]
-    if(!grepl("^tc~", nm)) next
-    nm_vec[i] <- stringr::str_split(nm, "~")[[1]][3]
-  }
-  names(p_dots$var_exp_spline) <- nm_vec
-  assign("p_dots", p_dots, envir = rlang::caller_env())
-
 
   # transform response
   # ---------------------

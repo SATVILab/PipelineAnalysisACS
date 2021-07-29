@@ -8,6 +8,8 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj){
   # Preparation
   # ============================
 
+  p_dots <- remove_tc_assay_from_exp_s(p_dots)
+
   # list to save results to
   # ---------------------------
   mod_list <- list()
