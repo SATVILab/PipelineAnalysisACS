@@ -8,7 +8,7 @@ prep_data_raw <- function(rmd, iter, ...) {
 
   .prep_data_raw <- switch(
     rmd,
-    "cyt_pos_freq" = .prep_dr_cyt_pos_freq,
+    "cytokines" = .prep_dr_cytokines,
     "inf_markers" = .prep_dr_inf_markers,
     "hladr" = .prep_dr_hladr,
     "flowsom" = .prep_dr_flowsom,
@@ -260,7 +260,7 @@ prep_data_raw <- function(rmd, iter, ...) {
   )
 }
 
-.prep_dr_cyt_pos_freq <- function(iter, stage, data_raw, ...) {
+.prep_dr_cytokines <- function(iter, stage, data_raw, ...) {
 
   switch(
     stage,
@@ -325,7 +325,7 @@ prep_iter <- function(rmd, iter, ...) {
   }
   .prep_iter <- switch(
     rmd,
-    "cyt_pos_freq" = .prep_iter_cyt_pos_freq,
+    "cytokines" = .prep_iter_cytokines,
     "hladr" = .prep_iter_identity,
     "inf_markers" = .prep_iter_identity,
     "flowsom" = .prep_iter_flowsom,
@@ -336,7 +336,7 @@ prep_iter <- function(rmd, iter, ...) {
 
 .prep_iter_identity <- function(iter, ...) iter
 
-.prep_iter_cyt_pos_freq <- function(iter, data_raw) {
+.prep_iter_cytokines <- function(iter, data_raw) {
 
   purrr::map_df(unique(data_raw$cyt_combn),
                 function(cyt_combn){
