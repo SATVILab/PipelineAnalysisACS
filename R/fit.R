@@ -4,6 +4,8 @@
 #' @export
 fit <- function(data_mod, data_raw, p_dots, dir_proj){
 
+  if(nrow(data_mod) == 0) {stop("0 rows in data_mod")}
+
   # ============================
   # Preparation
   # ============================
@@ -56,13 +58,21 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj){
                                                         paste0('family = ', p_dots$family)),
                                         'glmmTMB' = paste0('family = ',
                                                            switch(p_dots$family,
+                                                                  "Beta" = ,
                                                                   'beta' = 'beta_family()',
                                                                   'gamma' = ,
+                                                                  "betabin" = "betabinomial(link = 'logit')",
+                                                                  "bin" = "binomial",
                                                                   "nb" = "nbinom2",
                                                                   'Gamma' = "Gamma(link = 'log')",
                                                                   stop("family does not match one of the available ones for glmmTMB"))),
                                         stop("pkg not one of the available pkg's")),
                        "TRUE" = NULL)
+
+  family_arg <- switch(
+    as.character(p_dots$family %in% c("betabin", "bin")),
+    "TRUE" = paste0(family_arg, ", weights = data_mod$n_cell"),
+    "FALSE" = family_arg)
 
   mod_arg_txt <- list(
     family_arg,

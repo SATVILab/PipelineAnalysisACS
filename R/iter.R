@@ -124,10 +124,10 @@ set_boundary_knots <- function(iter_tbl) {
   two_inner_knots_vec_lgl <- purrr::map_lgl(
     ttb_model_vec_ind,
     function(i) {
-    iter_tbl$var_exp_spline[[i]]$tfmttb$params$knots %>%
+      iter_tbl$var_exp_spline[[i]]$tfmttb$params$knots %>%
         length() %>%
         magrittr::equals(2)
-  })
+    })
   if(!any(two_inner_knots_vec_lgl)) return(iter_tbl)
   set_bk_vec_ind <- ttb_model_vec_ind[two_inner_knots_vec_lgl]
   var_exp_spline_list <- iter_tbl %>%
@@ -180,6 +180,13 @@ print_iter <- function(iter, ind) {
     iter_old[, seq_len(ncol(iter_old))] <- "&$#("
   } else {
     iter_old <- parent.frame(2)$iter_old
+    if(!identical(
+      colnames(iter),
+      colnames(iter_old))
+    ) {
+      iter_old <- iter
+      iter_old[, seq_len(ncol(iter_old))] <- "&$#("
+    }
   }
   purrr::walk(seq_len(ncol(iter)), function(j) {
     if(!identical(iter[[j]], iter_old[[j]])) {

@@ -12,6 +12,10 @@ preprocess <- function(data_raw, p_dots, dir_proj){
 
   data_raw %<>% tibble::as_tibble()
 
+  # remove NA obs
+  data_raw <- data_raw %>%
+    dplyr::filter(!is.na(resp))
+
   # add clinical_data
   # ---------------------
   cols_to_add_vec <- c(
@@ -20,13 +24,13 @@ preprocess <- function(data_raw, p_dots, dir_proj){
     p_dots$var_exp,
     p_dots$var_re,
     p_dots$var_offset
-    )
+  )
   data_raw <- data_raw %>%
     add_clinical_data_and_filter(
       cols_add = cols_to_add_vec[!grepl("^tc~|^none$", cols_to_add_vec)],
       ttb_min = p_dots$ttb_min,
       ttb_max = p_dots$iter$ttb_max
-      )
+    )
 
   # choose only progressor or non-prog samples
 

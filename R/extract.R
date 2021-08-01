@@ -17,7 +17,7 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
     purrr::map_lgl(
       fit_obj,
       function(x) !identical(class(x), "try-error"))
-    ]
+  ]
 
   # prep
   # -------------
@@ -38,13 +38,13 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
 
   # variables to test for in wald test
   var_test_list <- list(p_dots$var_exp, names(p_dots$var_exp_spline),
-                       c(p_dots$var_exp, names(p_dots$var_exp_spline)))
+                        c(p_dots$var_exp, names(p_dots$var_exp_spline)))
   var_test_list <- var_test_list[!vapply(var_test_list, is.null, logical(1))]
 
   # get Wald stats
   wald_tbl <- modutils::test_wald(
     fit_obj$full, var_test_list, match_cond = "any"
-    )
+  )
 
   # append results
   results_list %<>% append(list('wald' = wald_tbl))
@@ -56,11 +56,11 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
       names(fit_obj[-which(names(fit_obj) == 'full')]),
       function(x){
         ifelse(
-        x == "null",
-        paste0(c(p_dots$var_exp, names(p_dots$var_exp_spline)),
-               collapse = "; "),
-        x)
-    })
+          x == "null",
+          paste0(c(p_dots$var_exp, names(p_dots$var_exp_spline)),
+                 collapse = "; "),
+          x)
+      })
     lr_tbl <- modutils::test_lr(
       fit_obj$full,
       fit_obj[-which(names(fit_obj) == 'full')],

@@ -27,7 +27,7 @@ display <- function(data_raw, data_mod, dir_proj,
   on.exit(suppressWarnings(try(
     detach("package:splines", unload = TRUE),
     silent = TRUE
-    )))
+  )))
 
 
   #return(invisible(TRUE))
@@ -77,7 +77,7 @@ display <- function(data_raw, data_mod, dir_proj,
   var_int_non_p <- setdiff(p_dots$var_int, "Progressor")
   if (is_int) {
     is_int_prog <- "Progressor" %in% p_dots$var_int
-     # prog included
+    # prog included
     is_int_prog_n_num <- is.numeric(data_mod[[var_int_non_p]]) # numeric
     plot_int <- is_int && is_int_prog && is_int_prog_n_num
   } else {
