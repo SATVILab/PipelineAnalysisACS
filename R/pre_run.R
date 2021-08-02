@@ -135,7 +135,7 @@ prep_data_raw <- function(rmd, iter, ...) {
         dplyr::mutate(n_cell_ag = sum(count_clust_ag)) %>%
         dplyr::ungroup()
 
-      # calculte the frequency of ag-specific
+      # calculate the frequency of ag-specific
       # cells that belong to a given cluster
       data_raw <- data_raw %>%
         dplyr::mutate(freq_ag = count_clust_ag /
@@ -160,6 +160,7 @@ prep_data_raw <- function(rmd, iter, ...) {
         iter$response_type,
         "freq_tot_bs" = data_raw %>%
           dplyr::group_by(SubjectID, VisitType,
+                          clust,
                           n_cell_tot_stim,
                           n_cell_tot_uns) %>%
           dplyr::summarise(
@@ -263,16 +264,24 @@ prep_data_raw <- function(rmd, iter, ...) {
 .prep_dr_cytokines <- function(iter, stage, data_raw, ...) {
 
   switch(
-    as.character(grepl("prob$", iter$cyt_response_type)),
-    "FALSE" = .prep_dr_cytokines_freq(
+    as.character(!grepl("prob$|fs$", iter$cyt_response_type)),
+    "TRUE" = .prep_dr_cytokines_freq(
       iter = iter,
       stage = stage,
       data_raw = data_raw
     ),
-    "TRUE" = .prep_dr_cytokines_prob(
-      iter = iter,
-      stage = stage,
-      data_raw = data_raw
+    "FALSE" = switch(
+      as.character(grepl("fs$", iter$cyt_response_type)),
+      "FALSE" = .prep_dr_cytokines_prob(
+        iter = iter,
+        stage = stage,
+        data_raw = data_raw)
+      ,
+      "TRUE" = .prep_dr_cytokines_scores(
+        iter = iter,
+        stage = stage,
+        data_raw = data_raw
+        )
     )
   )
 }
@@ -305,6 +314,11 @@ prep_data_raw <- function(rmd, iter, ...) {
           filter_list = iter["stim"]
         )
 
+      # calculate background-subtracted frequencies, if need be
+      data_raw <- data_raw %>%
+        .subtract_background()
+
+
       # convert cyt combn from COMPASS format
       data_raw$cyt_combn <- compassutils::convert_cyt_combn_format(
         cyt_combn = data_raw$cyt_combn,
@@ -315,23 +329,68 @@ prep_data_raw <- function(rmd, iter, ...) {
       data_raw <- data_raw %>%
         dplyr::filter(stringr::str_detect(cyt_combn, "\\+"))
 
-      # remove no-responding cyt_combn's
+      # sum over markers
+      data_raw <- switch(
+        iter$cyt_response_type,
+        "summed" = data_raw %>%
+          cytoutils::sum_over_markers(
+            grp = c("SubjectID", "VisitType",
+                    "stim", "n_cell"),
+            cmbn = "cyt_combn",
+            levels = c("-", "+"),
+            resp = c("freq_bs")
+          ) %>%
+          dplyr::mutate(cyt_combn = "summed") %>%
+          dplyr::mutate(resp = freq_bs * n_cell),
+        "cyt_prop" = ,
+        "cyt" = {
+          marker_vec <- stringr::str_split(unique(data_raw$cyt_combn),
+                                           pattern = "\\+|\\-")[[1]]
+          marker_vec <- marker_vec[-which(marker_vec == "")]
+          purrr::map_df(marker_vec, function(mk) {
+            data_raw %>%
+              cytoutils::sum_over_markers(
+                grp = c("SubjectID", "VisitType",
+                        "stim", "n_cell"),
+                cmbn = "cyt_combn",
+                markers_to_sum = setdiff(marker_vec, mk),
+                levels = c("-", "+"),
+                resp = c("freq_bs", "resp")
+              ) %>%
+              dplyr::filter(grepl("\\+", cyt_combn))
+          })
+        },
+        "combn" = ,
+        "combn_prop" = data_raw,
+        stop(paste0(iter$cyt_response_type, " not"))
+      )
+
+      # remove non-responding cyt_combn's
       # from analysis if not summed
       data_raw <- switch(
         iter$cyt_response_type,
         "summed" = data_raw,
-        "cyt_prop" =
-        "cyt" =  compass_obj <- switch(
-          iter$ds,
-          "cd4_th1_il17" =
-            DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass,
-          "cd8_th1" =
-            DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass$compass,
-          "tcrgd_th1" =
-            DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass$compass
-        ) %>%
-          magrittr::extract2("locb0.15_min_clust") %>%
-          magrittr::extract2(iter$stim),
+        "cyt_prop" = ,
+        "cyt" = {
+          compass_obj <- switch(
+            iter$ds,
+            "cd4_th1_il17" =
+              DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass,
+            "cd8_th1" =
+              DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
+            "tcrgd_th1" =
+              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
+          ) %>%
+            magrittr::extract2("locb0.15_min_clust") %>%
+            magrittr::extract2(iter$stim)
+
+          .remove_cyt_low_prob(
+            .data = data_raw,
+            compass_obj = compass_obj,
+            quant_min = 0.25,
+            prob_min = 0.8
+          )
+        },
         "combn_prop" = ,
         "combn" = {
           compass_obj <- switch(
@@ -339,9 +398,9 @@ prep_data_raw <- function(rmd, iter, ...) {
             "cd4_th1_il17" =
               DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass,
             "cd8_th1" =
-              DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass$compass,
+              DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
             "tcrgd_th1" =
-              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass$compass
+              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
           ) %>%
             magrittr::extract2("locb0.15_min_clust") %>%
             magrittr::extract2(iter$stim)
@@ -360,18 +419,20 @@ prep_data_raw <- function(rmd, iter, ...) {
       data_raw <- switch(
         iter$cyt_response_type,
         "summed" = ,
+        "cyt" = ,
         "combn" = data_raw,
-        combn_prop = {
+        "cyt_prop" = ,
+        "combn_prop" = {
           prob_tbl <- switch(
             iter$ds,
             "cd4_th1_il17" =
               DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$post_probs_bulk %>%
               magrittr::extract2("exc-Nd146Di"),
             "cd8_th1" =
-              DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass$compass %>%
+              DataTidyACSCyTOFCytokinesTCells::cd8_th1$post_probs_bulk %>%
               magrittr::extract2("exc-Nd146Di"),
             "tcrgd_th1" =
-              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass$compass %>%
+              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$post_probs_bulk %>%
               magrittr::extract2("exc-Nd146Di")
           ) %>%
             magrittr::extract2("locb0.15_min_clust") %>%
@@ -384,24 +445,14 @@ prep_data_raw <- function(rmd, iter, ...) {
         }
       )
 
-      # calculate background-subtracted frequencies, if need be
-      data_raw <- data_raw %>%
-        .subtract_background()
 
       # sum or calculate proportion (or do nothing)
       data_raw <- switch(
         iter$cyt_response_type,
-        "summed" = data_raw %>%
-          cytoutils::sum_over_markers(
-            grp = c("SubjectID", "VisitType",
-                    "stim", "n_cell"),
-            cmbn = "cyt_combn",
-            levels = c("-", "+"),
-            resp = c("freq_bs")
-          ) %>%
-          dplyr::mutate(cyt_combn = "summed") %>%
-          dplyr::mutate(resp = freq_bs * n_cell),
+        "summed" = ,
+        "cyt" = ,
         "combn" = data_raw,
+        "cyt_prop" = ,
         "combn_prop" = {
           data_raw %>%
             dplyr::group_by(SubjectID, VisitType, stim) %>%
@@ -433,7 +484,11 @@ prep_data_raw <- function(rmd, iter, ...) {
     "inner" = switch(
       iter$cyt_response_type,
       "summed" = data_raw,
+      "cyt" = ,
+      "cyt_prob" = ,
+      "cyt_prop" = ,
       "combn" = ,
+      "combn_prob" = ,
       "combn_prop" = {
         combn_comp <- paste0(
           "^",
@@ -512,8 +567,8 @@ prep_data_raw <- function(rmd, iter, ...) {
           compass_obj <- switch(
             iter$ds,
             "cd4_th1_il17" = DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass,
-            "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass$compass,
-            "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass$compass
+            "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
+            "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
           ) %>%
             magrittr::extract2("locb0.15_min_clust") %>%
             magrittr::extract2(iter$stim)
@@ -538,9 +593,9 @@ prep_data_raw <- function(rmd, iter, ...) {
             iter$ds,
             "cd4_th1_il17" = DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$post_probs_bulk %>%
               magrittr::extract2("exc-Nd146Di"),
-            "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass$compass %>%
+            "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass %>%
               magrittr::extract2("exc-Nd146Di"),
-            "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass$compass%>%
+            "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass%>%
               magrittr::extract2("exc-Nd146Di")
           ) %>%
             magrittr::extract2("locb0.15_min_clust") %>%
@@ -682,12 +737,28 @@ prep_data_raw <- function(rmd, iter, ...) {
     )
 
   compass_tbl_prob <- compass_tbl_prob %>%
-    magrittr::extract(,c("SampleID", unique(.data$cyt_combn)))
+    tidyr::pivot_longer(
+      -SampleID,
+      names_to = "cyt_combn",
+      values_to = "prob"
+    )
+
+  marker_vec <- unique(.data$cyt_combn)
+  marker_vec <- stringr::str_remove_all(marker_vec, "\\+|\\-")
+  compass_tbl_prob <- purrr::map_df(marker_vec, function(mk) {
+    compass_tbl_prob %>%
+      dplyr::filter(grepl(
+        paste0(mk, "\\+"),
+        cyt_combn
+      )) %>%
+      dplyr::mutate(combn = paste0(mk, "+")) %>%
+      dplyr::group_by(SampleID, combn) %>%
+      dplyr::summarise(prob = 1 - prod(1 - prob),
+                       .groups = "drop_last") %>%
+      dplyr::ungroup()
+  })
 
   combn_vec_sel <- compass_tbl_prob %>%
-    tidyr::pivot_longer(-SampleID,
-                        names_to = "combn",
-                        values_to = "prob") %>%
     dplyr::group_by(combn) %>%
     dplyr::filter(quantile(.data$prob, 1 - quant_min) >= prob_min) %>%
     dplyr::slice(1) %>%
@@ -696,6 +767,7 @@ prep_data_raw <- function(rmd, iter, ...) {
 
   .data %>%
     dplyr::filter(cyt_combn %in% combn_vec_sel)
+
 
 }
 
