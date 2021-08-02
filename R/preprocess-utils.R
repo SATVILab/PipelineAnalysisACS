@@ -47,10 +47,6 @@ trans <- function(.data, trans) {
 #' @export
 prep_bs_freq <- function(.data, cyt_response_type) {
 
-  .data$cyt_combn <- compassutils::convert_cyt_combn_format(
-    cyt_combn = .data$cyt_combn,
-    to = "std"
-  )
   .data <- .data %>%
     dplyr::filter(grepl("\\+", .data$cyt_combn))
 
@@ -70,38 +66,15 @@ prep_bs_freq <- function(.data, cyt_response_type) {
       dplyr::select(batch_sh, SubjectID, VisitType,
                     cyt_combn,
                     stim, n_cell_stim, n_cell_uns,
-                    count_stim, count_uns),
+                    count_stim, count_uns) %>%
+      dplyr::filter(grepl("\\+", cyt_combn)),
     stop(paste0(
         paste0(cyt_response_type, collapse = "/"),
         " not available for cyt_response_type in prep_bs_freq")
         )
     )
 
-  .data <- .data %>%
-    cytoutils::calc_prop(
-      den = "n_cell_stim",
-      num = "count_stim",
-      nm = "prop_stim"
-    ) %>%
-    cytoutils::calc_prop(
-      den = "n_cell_uns",
-      num = "count_uns",
-      nm = "prop_uns"
-    ) %>%
-    dplyr::mutate(
-      prop_bs = prop_stim - prop_uns,
-      count_bs = prop_bs * n_cell_stim
-    ) %>%
-    dplyr::rename(
-      n_cell = n_cell_stim,
-      resp = count_bs
-    ) %>%
-    dplyr::mutate(prop_bs = pmax(prop_bs * 1e2, 0),
-                  resp = pmax(resp, 0)) %>%
-    dplyr::rename(freq_bs = prop_bs) %>%
-    dplyr::select(-c(count_stim, count_uns,
-                     n_cell_uns, prop_stim,
-                     prop_uns))
+
 
   .data
 }

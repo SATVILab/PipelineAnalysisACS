@@ -263,14 +263,41 @@ prep_data_raw <- function(rmd, iter, ...) {
 .prep_dr_cytokines <- function(iter, stage, data_raw, ...) {
 
   switch(
+    as.character(grepl("prob$", iter$cyt_response_type)),
+    "FALSE" = .prep_dr_cytokines_freq(
+      iter = iter,
+      stage = stage,
+      data_raw = data_raw
+    ),
+    "TRUE" = .prep_dr_cytokines_prob(
+      iter = iter,
+      stage = stage,
+      data_raw = data_raw
+    )
+  )
+}
+
+.prep_dr_cytokines_freq <- function(iter,
+                                    stage,
+                                    data_raw) {
+  switch(
     stage,
     "outer" = {
       data_raw <- switch(
         iter$ds,
-        "cd4_th1_il17" = DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$stats_combn_tbl,
-        "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$stats_combn_tbl,
-        "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl
+        "cd4_th1_il17" =
+          DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$stats_combn_tbl,
+        "cd8_th1" =
+          DataTidyACSCyTOFCytokinesTCells::cd8_th1$stats_combn_tbl,
+        "tcrgd_th1" =
+          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl
       )
+
+      # select required columns
+      data_raw <- data_raw %>%
+        dplyr::select(SubjectID, VisitType, stim, cyt_combn,
+                      count_stim, n_cell_stim, count_uns,
+                      n_cell_uns)
 
       # filter
       data_raw <- data_raw %>%
@@ -278,14 +305,424 @@ prep_data_raw <- function(rmd, iter, ...) {
           filter_list = iter["stim"]
         )
 
-      data_raw <- prep_bs_freq(
-        .data = data_raw,
-        cyt_response_type = iter$cyt_response_type
+      # convert cyt combn from COMPASS format
+      data_raw$cyt_combn <- compassutils::convert_cyt_combn_format(
+        cyt_combn = data_raw$cyt_combn,
+        to = "std"
+      )
+
+      # remove all-neg cyt_combn
+      data_raw <- data_raw %>%
+        dplyr::filter(stringr::str_detect(cyt_combn, "\\+"))
+
+      # remove no-responding cyt_combn's
+      # from analysis if not summed
+      data_raw <- switch(
+        iter$cyt_response_type,
+        "summed" = data_raw,
+        "cyt_prop" =
+        "cyt" =  compass_obj <- switch(
+          iter$ds,
+          "cd4_th1_il17" =
+            DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass,
+          "cd8_th1" =
+            DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass$compass,
+          "tcrgd_th1" =
+            DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass$compass
+        ) %>%
+          magrittr::extract2("locb0.15_min_clust") %>%
+          magrittr::extract2(iter$stim),
+        "combn_prop" = ,
+        "combn" = {
+          compass_obj <- switch(
+            iter$ds,
+            "cd4_th1_il17" =
+              DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass,
+            "cd8_th1" =
+              DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass$compass,
+            "tcrgd_th1" =
+              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass$compass
+          ) %>%
+            magrittr::extract2("locb0.15_min_clust") %>%
+            magrittr::extract2(iter$stim)
+
+          .remove_combn_low_prob(
+            .data = data_raw,
+            compass_obj = compass_obj,
+            quant_min = 0.25,
+            prob_min = 0.8
+          )
+        },
+        stop(paste0(iter$cyt_response_type, " not recognised"))
+      )
+
+      # remove individuals that didn't respond to anything
+      data_raw <- switch(
+        iter$cyt_response_type,
+        "summed" = ,
+        "combn" = data_raw,
+        combn_prop = {
+          prob_tbl <- switch(
+            iter$ds,
+            "cd4_th1_il17" =
+              DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$post_probs_bulk %>%
+              magrittr::extract2("exc-Nd146Di"),
+            "cd8_th1" =
+              DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass$compass %>%
+              magrittr::extract2("exc-Nd146Di"),
+            "tcrgd_th1" =
+              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass$compass %>%
+              magrittr::extract2("exc-Nd146Di")
+          ) %>%
+            magrittr::extract2("locb0.15_min_clust") %>%
+            magrittr::extract2(iter$stim)
+          data_raw %>%
+            dplyr::filter(
+              paste0(SubjectID, "_", VisitType) %in%
+                prob_tbl[["sampleid"]][prob_tbl[["prob"]] > 0.75]
+            )
+        }
+      )
+
+      # calculate background-subtracted frequencies, if need be
+      data_raw <- data_raw %>%
+        .subtract_background()
+
+      # sum or calculate proportion (or do nothing)
+      data_raw <- switch(
+        iter$cyt_response_type,
+        "summed" = data_raw %>%
+          cytoutils::sum_over_markers(
+            grp = c("SubjectID", "VisitType",
+                    "stim", "n_cell"),
+            cmbn = "cyt_combn",
+            levels = c("-", "+"),
+            resp = c("freq_bs")
+          ) %>%
+          dplyr::mutate(cyt_combn = "summed") %>%
+          dplyr::mutate(resp = freq_bs * n_cell),
+        "combn" = data_raw,
+        "combn_prop" = {
+          data_raw %>%
+            dplyr::group_by(SubjectID, VisitType, stim) %>%
+            dplyr::mutate(n_cell_ag = sum(resp)) %>%
+            dplyr::mutate(n_cell_ag = round(n_cell_ag)) %>%
+            dplyr::filter(n_cell_ag >= 1) %>%
+            dplyr::mutate(resp = resp/n_cell_ag) %>%
+            dplyr::mutate(resp = pmin(1, resp) %>%
+                            pmax(0)) %>%
+            dplyr::select(-c(n_cell, freq_bs)) %>%
+            dplyr::rename(n_cell = n_cell_ag) %>%
+            dplyr::ungroup() %>%
+            dplyr::select(SubjectID, VisitType,
+                          stim, cyt_combn, n_cell, resp) %>%
+            dplyr::filter(length(unique(cyt_combn)) > 1) %>%
+            dplyr::select(SubjectID, VisitType, cyt_combn, n_cell, resp) %>%
+            dplyr::group_by(cyt_combn) %>%
+            dplyr::mutate(sd = sd(resp, na.rm = TRUE),
+                          iqr = quantile(.data[["resp"]], na.rm = TRUE, 0.75) -
+                            quantile(.data[["resp"]], na.rm = TRUE, 0.25)) %>%
+            dplyr::filter(sd(resp, na.rm = TRUE) > 0.125,
+                          iqr > 0.2) %>%
+            dplyr::ungroup() %>%
+            dplyr::select(-c(sd, iqr))
+        },
+        stop(paste0(iter$cyt_response_type, " not recognised"))
       )
     },
-    "inner" = data_raw
+    "inner" = switch(
+      iter$cyt_response_type,
+      "summed" = data_raw,
+      "combn" = ,
+      "combn_prop" = {
+        combn_comp <- paste0(
+          "^",
+          paste0(cytoutils:::add_double_backslash(
+            iter$cyt_response_type_grp
+          )),
+          "$")
+        data_raw <- data_raw %>%
+          dplyr::filter(grepl(combn_comp,
+                              .data$cyt_combn))
+
+        check_g_1 <- data_raw %>%
+          dplyr::group_by(SubjectID, VisitType) %>%
+          dplyr::summarise(cnt = dplyr::n(),
+                           .groups = "drop") %>%
+          dplyr::ungroup() %>%
+          dplyr::summarise(n_g_1 = any(cnt > 1)) %>%
+          dplyr::pull(n_g_1)
+
+        if(check_g_1) stop(
+          "at least one key has more than one entry"
+        )
+        data_raw
+
+      }
+    )
+  )
+}
+
+.prep_dr_cytokines_prob <- function(iter,
+                                    stage,
+                                    data_raw) {
+
+  switch(
+    stage,
+    "outer" = {
+      data_raw <- switch(
+        iter$ds,
+        "cd4_th1_il17" =
+          DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$stats_combn_tbl,
+        "cd8_th1" =
+          DataTidyACSCyTOFCytokinesTCells::cd8_th1$stats_combn_tbl,
+        "tcrgd_th1" =
+          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl
+      )
+
+      # select required columns
+      data_raw <- data_raw %>%
+        dplyr::select(SubjectID, VisitType, stim, cyt_combn,
+                      count_stim, n_cell_stim, count_uns,
+                      n_cell_uns)
+
+      # filter
+      data_raw <- data_raw %>%
+        filter_using_list(
+          filter_list = iter["stim"]
+        )
+
+      # convert cyt combn from COMPASS format
+      data_raw$cyt_combn <- compassutils::convert_cyt_combn_format(
+        cyt_combn = data_raw$cyt_combn,
+        to = "std"
+      )
+
+      # remove all-neg cyt_combn
+      data_raw <- data_raw %>%
+        dplyr::filter(stringr::str_detect(cyt_combn, "\\+"))
+
+      # remove no-responding cyt_combn's
+      # from analysis if not summed
+      data_raw <- switch(
+        iter$cyt_response_type,
+        "summed" = data_raw,
+        "combn_prop" = ,
+        "combn" = {
+          compass_obj <- switch(
+            iter$ds,
+            "cd4_th1_il17" = DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass,
+            "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass$compass,
+            "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass$compass
+          ) %>%
+            magrittr::extract2("locb0.15_min_clust") %>%
+            magrittr::extract2(iter$stim)
+
+          .remove_combn_low_prob(
+            .data = data_raw,
+            compass_obj = compass_obj,
+            quant_min = 0.25,
+            prob_min = 0.8
+          )
+        },
+        stop(paste0(iter$cyt_response_type, " not recognised"))
+      )
+
+      # remove individuals that didn't respond to anything
+      data_raw <- switch(
+        iter$cyt_response_type,
+        "summed" = ,
+        "combn" = data_raw,
+        combn_prop = {
+          prob_tbl <- switch(
+            iter$ds,
+            "cd4_th1_il17" = DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$post_probs_bulk %>%
+              magrittr::extract2("exc-Nd146Di"),
+            "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass$compass %>%
+              magrittr::extract2("exc-Nd146Di"),
+            "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass$compass%>%
+              magrittr::extract2("exc-Nd146Di")
+          ) %>%
+            magrittr::extract2("locb0.15_min_clust") %>%
+            magrittr::extract2(iter$stim)
+          data_raw %>%
+            dplyr::filter(
+              paste0(SubjectID, "_", VisitType) %in%
+                prob_tbl[["sampleid"]][prob_tbl[["prob"]] > 0.75]
+            )
+        }
+      )
+
+      # calculate background-subtracted frequencies, if need be
+      data_raw <- data_raw %>%
+        .subtract_background()
+
+      # sum or calculate proportion (or do nothing)
+      data_raw <- switch(
+        iter$cyt_response_type,
+        "summed" = data_raw %>%
+          cytoutils::sum_over_markers(
+            grp = c("SubjectID", "VisitType",
+                    "stim", "n_cell"),
+            cmbn = "cyt_combn",
+            levels = c("-", "+"),
+            resp = c("freq_bs")
+          ) %>%
+          dplyr::mutate(cyt_combn = "summed") %>%
+          dplyr::mutate(resp = freq_bs * n_cell),
+        "combn" = data_raw,
+        "combn_prop" = {
+          data_raw %>%
+            dplyr::group_by(SubjectID, VisitType, stim) %>%
+            dplyr::mutate(n_cell_ag = sum(resp)) %>%
+            dplyr::mutate(n_cell_ag = round(n_cell_ag)) %>%
+            dplyr::filter(n_cell_ag >= 1) %>%
+            dplyr::mutate(resp = resp/n_cell_ag) %>%
+            dplyr::mutate(resp = pmin(1, resp) %>%
+                            pmax(0)) %>%
+            dplyr::select(-c(n_cell, freq_bs)) %>%
+            dplyr::rename(n_cell = n_cell_ag) %>%
+            dplyr::ungroup() %>%
+            dplyr::select(SubjectID, VisitType,
+                          stim, cyt_combn, n_cell, resp) %>%
+            dplyr::filter(length(unique(cyt_combn)) > 1) %>%
+            dplyr::select(SubjectID, VisitType, cyt_combn, n_cell, resp) %>%
+            dplyr::group_by(cyt_combn) %>%
+            dplyr::mutate(sd = sd(resp, na.rm = TRUE),
+                          iqr = quantile(.data[["resp"]], na.rm = TRUE, 0.75) -
+                            quantile(.data[["resp"]], na.rm = TRUE, 0.25)) %>%
+            dplyr::filter(sd(resp, na.rm = TRUE) > 0.125,
+                          iqr > 0.2) %>%
+            dplyr::ungroup() %>%
+            dplyr::select(-c(sd, iqr))
+        },
+        stop(paste0(iter$cyt_response_type, " not recognised"))
+      )
+    },
+    "inner" = switch(
+      iter$cyt_response_type,
+      "summed" = data_raw,
+      "combn" = ,
+      "combn_prop" = {
+        combn_comp <- paste0(
+          "^",
+          paste0(cytoutils:::add_double_backslash(
+            iter$cyt_response_type_grp
+          )),
+          "$")
+        data_raw <- data_raw %>%
+          dplyr::filter(grepl(combn_comp,
+                              .data$cyt_combn))
+
+        check_g_1 <- data_raw %>%
+          dplyr::group_by(SubjectID, VisitType) %>%
+          dplyr::summarise(cnt = dplyr::n(),
+                           .groups = "drop") %>%
+          dplyr::ungroup() %>%
+          dplyr::summarise(n_g_1 = any(cnt > 1)) %>%
+          dplyr::pull(n_g_1)
+
+        if(check_g_1) stop(
+          "at least one key has more than one entry"
+        )
+        data_raw
+
+      }
+    )
   )
 
+}
+
+.remove_combn_low_prob <- function(.data, compass_obj, quant_min, prob_min) {
+
+  compass_mat_prob <- compass_obj$fit$mean_gamma
+  rn_vec <- rownames(compass_mat_prob)
+
+  compass_tbl_prob <- compass_mat_prob %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(SampleID = rn_vec) %>%
+    dplyr::select(SampleID, everything())
+
+  colnames(compass_tbl_prob)[-1] <-
+    compassutils::convert_cyt_combn_format(
+      colnames(compass_tbl_prob)[-1], to = "std"
+    )
+
+  compass_tbl_prob <- compass_tbl_prob %>%
+    magrittr::extract(,c("SampleID", unique(.data$cyt_combn)))
+
+  combn_vec_sel <- compass_tbl_prob %>%
+    tidyr::pivot_longer(-SampleID,
+                        names_to = "combn",
+                        values_to = "prob") %>%
+    dplyr::group_by(combn) %>%
+    dplyr::filter(quantile(.data$prob, 1 - quant_min) >= prob_min) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup() %>%
+    dplyr::pull("combn")
+
+  .data %>%
+    dplyr::filter(cyt_combn %in% combn_vec_sel)
+
+}
+
+.remove_cyt_low_prob <- function(.data, compass_obj, quant_min, prob_min) {
+
+  compass_mat_prob <- compass_obj$fit$mean_gamma
+  rn_vec <- rownames(compass_mat_prob)
+
+  compass_tbl_prob <- compass_mat_prob %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(SampleID = rn_vec) %>%
+    dplyr::select(SampleID, everything())
+
+  colnames(compass_tbl_prob)[-1] <-
+    compassutils::convert_cyt_combn_format(
+      colnames(compass_tbl_prob)[-1], to = "std"
+    )
+
+  compass_tbl_prob <- compass_tbl_prob %>%
+    magrittr::extract(,c("SampleID", unique(.data$cyt_combn)))
+
+  combn_vec_sel <- compass_tbl_prob %>%
+    tidyr::pivot_longer(-SampleID,
+                        names_to = "combn",
+                        values_to = "prob") %>%
+    dplyr::group_by(combn) %>%
+    dplyr::filter(quantile(.data$prob, 1 - quant_min) >= prob_min) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup() %>%
+    dplyr::pull("combn")
+
+  .data %>%
+    dplyr::filter(cyt_combn %in% combn_vec_sel)
+
+}
+
+.subtract_background <- function(.data) {
+  .data %>%
+    cytoutils::calc_prop(
+      den = "n_cell_stim",
+      num = "count_stim",
+      nm = "prop_stim"
+    ) %>%
+    cytoutils::calc_prop(
+      den = "n_cell_uns",
+      num = "count_uns",
+      nm = "prop_uns"
+    ) %>%
+    dplyr::mutate(
+      prop_bs = prop_stim - prop_uns,
+      count_bs = prop_bs * n_cell_stim
+    ) %>%
+    dplyr::rename(
+      n_cell = n_cell_stim,
+      resp = count_bs
+    ) %>%
+    dplyr::rename(freq_bs = prop_bs) %>%
+    dplyr::select(-c(count_stim, count_uns,
+                     n_cell_uns, prop_stim,
+                     prop_uns))
 }
 
 .prep_dr_inf_markers <- function(iter, stage, data_raw, ...) {
