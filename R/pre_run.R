@@ -28,7 +28,9 @@ prep_data_raw <- function(rmd, iter, ...) {
         iter$ds,
         "cd4_th1_il17" = DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$flowsom,
         "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$flowsom,
-        "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$flowsom
+        "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$flowsom,
+        "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$flowsom,
+        "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$flowsom
       )
 
       # response type
@@ -36,7 +38,9 @@ prep_data_raw <- function(rmd, iter, ...) {
         iter$ds,
         "cd4_th1_il17" = "exc-Nd146Di",
         "cd8_th1" = "exc-Nd146Di",
-        "tcrgd_th1" = "exc-Nd146Di"
+        "tcrgd_th1" = "exc-Nd146Di",
+        "nk_ifng_tnf_il22" = "exc-none",
+        "bcell_ifng_il6" = "exc-none",
       )
 
       # remove all_u- from stim
@@ -83,7 +87,9 @@ prep_data_raw <- function(rmd, iter, ...) {
         iter$ds,
         "cd4_th1_il17" = DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$stats_combn_tbl,
         "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$stats_combn_tbl,
-        "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl
+        "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl,
+        "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$stats_combn_tbl,
+        "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$stats_combn_tbl
       )
       n_cell_tbl <- n_cell_tbl %>%
         dplyr::group_by(SubjectID, VisitType, stim) %>%
@@ -298,7 +304,10 @@ prep_data_raw <- function(rmd, iter, ...) {
         "cd8_th1" =
           DataTidyACSCyTOFCytokinesTCells::cd8_th1$stats_combn_tbl,
         "tcrgd_th1" =
-          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl
+          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl,
+        "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$stats_combn_tbl,
+        "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$stats_combn_tbl
+
       )
 
       # select required columns
@@ -378,7 +387,9 @@ prep_data_raw <- function(rmd, iter, ...) {
             "cd8_th1" =
               DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
             "tcrgd_th1" =
-              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
+              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass,
+            "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$compass,
+            "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$compass
           )  %>%
             magrittr::extract2("locb0.15_min_clust") %>%
             magrittr::extract2(iter$stim)
@@ -405,7 +416,9 @@ prep_data_raw <- function(rmd, iter, ...) {
             "cd8_th1" =
               DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
             "tcrgd_th1" =
-              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
+              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass,
+            "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$compass,
+            "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$compass
           ) %>%
             magrittr::extract2("locb0.15_min_clust") %>%
             magrittr::extract2(iter$stim)
@@ -446,7 +459,11 @@ prep_data_raw <- function(rmd, iter, ...) {
               magrittr::extract2("exc-Nd146Di"),
             "tcrgd_th1" =
               DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$post_probs_bulk %>%
-              magrittr::extract2("exc-Nd146Di")
+              magrittr::extract2("exc-Nd146Di"),
+            "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$post_probs_bulk %>%
+              magrittr::extract2("exc-none"),
+            "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$post_probs_bulk %>%
+              magrittr::extract2("exc-none")
           ) %>%
             magrittr::extract2("locb0.15_min_clust") %>%
             magrittr::extract2(iter$stim)
@@ -548,7 +565,9 @@ prep_data_raw <- function(rmd, iter, ...) {
         "cd8_th1" =
           DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
         "tcrgd_th1" =
-          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
+          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass,
+        "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$compass,
+        "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$compass
       ) %>%
         magrittr::extract2("locb0.15_min_clust") %>%
         magrittr::extract2(iter$stim)
@@ -676,7 +695,9 @@ prep_data_raw <- function(rmd, iter, ...) {
         "cd8_th1" =
           DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
         "tcrgd_th1" =
-          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
+          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass,
+        "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$compass,
+        "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$compass
       ) %>%
         magrittr::extract2("locb0.15_min_clust") %>%
         magrittr::extract2(iter$stim)
