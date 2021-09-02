@@ -22,8 +22,13 @@ trans <- function(.data, trans) {
   trans_fn <- switch(
     trans,
     "within_01" = function(x) {
-      range_x <- diff(range(x))
-      pmax(pmin(max(x) - range_x * 0.01, x), range_x * 0.01)
+      range_x <- range(x)
+      diff_x <- diff(range_x)
+      # now (not strictly) within 0,1
+      x <- (x - range_x[1])/diff_x
+      # strictly within 01:
+      small_diff <- diff_x * 0.005
+      pmax(small_diff, pmin(x, range_x[2] - small_diff))
     },
     "pos" = function(x) pmax(0, x),
     "pos_strict" = function(x) {
