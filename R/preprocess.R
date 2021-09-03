@@ -39,10 +39,13 @@ preprocess <- function(data_raw, p_dots, dir_proj){
   # ---------------------
   cols_to_add_vec_tc <- cols_to_add_vec[grepl("^tc~", cols_to_add_vec)] %>%
     stringr::str_remove("^tc~")
+
+  # tuberculomics compendium data
   data_raw <- data_raw %>%
     add_tc_assay_data(
       cols_add = cols_to_add_vec_tc,
-      cols_join = c("SubjectID", "VisitType")
+      cols_join = c("SubjectID", "VisitType"),
+      iter = p_dots$iter
     )
 
   # transform response

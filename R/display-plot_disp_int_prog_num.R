@@ -6,7 +6,10 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
                                   axis_x_reverse = FALSE,
                                   cat_to_col = NULL, axis_lab = NULL,
                                   add_test = "lr",
-                                  dir_test) {
+                                  dir_test,
+                                  gg_theme = cowplot::theme_cowplot(),
+                                  grid = "xy",
+                                  point_size = NULL) {
 
   # prep
   # --------------
@@ -32,7 +35,7 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
 
   # make response a frequency if offset
   # is number of cells
-  if(n_cell_ind){
+  if (n_cell_ind) {
     n_cell <- exp(eff_obj$offset)
     plot_tbl_eff <- plot_tbl_eff %>%
       dplyr::mutate(fit = fit / n_cell * 1e2,
@@ -138,6 +141,7 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
   p <- ggplot(plot_tbl_eff, aes(x = .data[[var_num]], y = fit,
                       col = .data[[var_cat]],
                       fill = .data[[var_cat]])) +
+    gg_theme +
     cowplot::background_grid(major = 'xy', minor = 'y') +
     #scale_x_reverse() +
     geom_ribbon(aes(ymin = lower, ymax = upper),
@@ -171,11 +175,23 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
   # -------------------
 
   # format raw data
+  point_geom_list <- list(data = plot_tbl_raw,
+                          aes(y = resp))
+  point_geom_list <- point_geom_list %>%
+    append(
+      switch(
+        as.character(is.null(point_size)),
+        "TRUE" = list(),
+        "FALSE" = list(size = point_size)
+        )
+      )
 
+  point_geom <- do.call(
+    geom_point,
+    point_geom_list
+    )
 
-  p_raw <- p +
-    geom_point(data = plot_tbl_raw,
-               aes(y = resp))
+  p_raw <- p + point_geom
 
   # restrict to between 0 and 100 output if modelling frequencies
   # ------------------
@@ -210,13 +226,21 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
 
     test_tbl <- test_tbl %>%
       dplyr::mutate(var = purrr::map_chr(var, function(x){
-        x %>%
+        x <- x %>%
+          stringr::str_replace("Progressor; tfmttb", "Progression") %>%
+          stringr::str_replace("^Progressor$", "Distal TB") %>%
           stringr::str_replace("; ", " and/or ") %>%
           stringr::str_replace(":",  " int. with ") %>%
-          stringr::str_replace("or tfmttb",  "or time") %>%
-          stringr::str_replace("tfmttb",  "Time") %>%
-          stringr::str_replace("risk6",  "RISK6")
-      }))
+          stringr::str_replace("^tfmttb$",  "Proximal TB") %>%
+          stringr::str_replace("risk6",  "RISK6") %>%
+          stringr::str_replace("^Progressor$", "Distal TB") %>%
+          stringr::str_replace("^Progressor ", "Progression ")
+      })) %>%
+      dplyr::mutate(p = signif(p, digits = 3))
+
+    if (!test_tbl$var[1] == "Progression") {
+      test_tbl$var[which(test_tbl$var == "Distal TB")] <- "Progression"
+    }
 
     res_text <- paste0(test_tbl$var, ": ", signif(test_tbl$p, digits = 3))
 
@@ -232,6 +256,6 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
   }
 
   p_list %>%
-    setNames(c("p_fit_manual_without_raw_data",
-               "p_fit_manual_with_raw_data"))
+    setNames(c("p_fit",
+               "p_fit_raw"))
 }

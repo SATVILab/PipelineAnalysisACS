@@ -12,9 +12,49 @@ prep_data_raw <- function(rmd, iter, ...) {
     "inf_markers" = .prep_dr_inf_markers,
     "hladr" = .prep_dr_hladr,
     "flowsom" = .prep_dr_flowsom,
+    "faust" = .prep_dr_faust,
     stop(paste0(rmd, " not recognised in prep_data_raw")))
 
   .prep_data_raw(iter = iter, ...)
+}
+
+.prep_dr_faust <- function(iter, stage, data_raw, ...) {
+
+  switch(
+    stage,
+    "outer" = {
+      data_raw <- DataTidyACSCyTOFFAUST::faust_data_tidy %>%
+        dplyr::rename(resp = count,
+                      pop_sub_faust = pop) %>%
+        dplyr::filter(stim == iter$stim)
+
+      data_raw %>%
+        dplyr::bind_rows(
+          data_raw %>%
+            dplyr::filter(den != "all") %>%
+            dplyr::group_by(SubjectID, VisitType, stim, den) %>%
+            dplyr::summarise(resp = n_cell[1],
+                             pop_sub_faust = den[1]) %>%
+            dplyr::ungroup() %>%
+            dplyr::select(-den) %>%
+            dplyr::left_join(
+              data_raw %>%
+                dplyr::filter(den == "all") %>%
+                dplyr::select(SubjectID, VisitType, stim, n_cell, den) %>%
+                dplyr::group_by(SubjectID, VisitType, stim, n_cell, den) %>%
+                dplyr::slice(1) %>%
+                dplyr::ungroup(),
+              by = c("SubjectID", "VisitType", "stim")
+            )
+        ) %>%
+        dplyr::select(SubjectID:stim, den, pop_sub_faust, n_cell, resp)
+    },
+    "inner" = {
+      data_raw %>%
+        dplyr::filter(den == iter$den,
+                      pop_sub_faust == iter$pop_sub_faust)
+    }
+  )
 }
 
 .prep_dr_flowsom <- function(iter, stage, data_raw, ...) {
@@ -28,9 +68,7 @@ prep_data_raw <- function(rmd, iter, ...) {
         iter$ds,
         "cd4_th1_il17" = DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$flowsom,
         "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$flowsom,
-        "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$flowsom,
-        "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$flowsom,
-        "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$flowsom
+        "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$flowsom
       )
 
       # response type
@@ -38,9 +76,7 @@ prep_data_raw <- function(rmd, iter, ...) {
         iter$ds,
         "cd4_th1_il17" = "exc-Nd146Di",
         "cd8_th1" = "exc-Nd146Di",
-        "tcrgd_th1" = "exc-Nd146Di",
-        "nk_ifng_tnf_il22" = "exc-none",
-        "bcell_ifng_il6" = "exc-none",
+        "tcrgd_th1" = "exc-Nd146Di"
       )
 
       # remove all_u- from stim
@@ -87,9 +123,7 @@ prep_data_raw <- function(rmd, iter, ...) {
         iter$ds,
         "cd4_th1_il17" = DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$stats_combn_tbl,
         "cd8_th1" = DataTidyACSCyTOFCytokinesTCells::cd8_th1$stats_combn_tbl,
-        "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl,
-        "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$stats_combn_tbl,
-        "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$stats_combn_tbl
+        "tcrgd_th1" = DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl
       )
       n_cell_tbl <- n_cell_tbl %>%
         dplyr::group_by(SubjectID, VisitType, stim) %>%
@@ -304,10 +338,7 @@ prep_data_raw <- function(rmd, iter, ...) {
         "cd8_th1" =
           DataTidyACSCyTOFCytokinesTCells::cd8_th1$stats_combn_tbl,
         "tcrgd_th1" =
-          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl,
-        "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$stats_combn_tbl,
-        "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$stats_combn_tbl
-
+          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl
       )
 
       # select required columns
@@ -387,9 +418,7 @@ prep_data_raw <- function(rmd, iter, ...) {
             "cd8_th1" =
               DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
             "tcrgd_th1" =
-              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass,
-            "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$compass,
-            "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$compass
+              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
           )  %>%
             magrittr::extract2("locb0.15_min_clust") %>%
             magrittr::extract2(iter$stim)
@@ -416,9 +445,7 @@ prep_data_raw <- function(rmd, iter, ...) {
             "cd8_th1" =
               DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
             "tcrgd_th1" =
-              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass,
-            "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$compass,
-            "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$compass
+              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
           ) %>%
             magrittr::extract2("locb0.15_min_clust") %>%
             magrittr::extract2(iter$stim)
@@ -433,7 +460,7 @@ prep_data_raw <- function(rmd, iter, ...) {
             .data = data_raw,
             compass_obj = compass_obj,
             quant_min = 0.25,
-            prob_min = 0.8
+            prob_min = 0.75
           )
         },
         stop(paste0(iter$cyt_response_type, " not recognised"))
@@ -459,11 +486,7 @@ prep_data_raw <- function(rmd, iter, ...) {
               magrittr::extract2("exc-Nd146Di"),
             "tcrgd_th1" =
               DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$post_probs_bulk %>%
-              magrittr::extract2("exc-Nd146Di"),
-            "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$post_probs_bulk %>%
-              magrittr::extract2("exc-none"),
-            "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$post_probs_bulk %>%
-              magrittr::extract2("exc-none")
+              magrittr::extract2("exc-Nd146Di")
           ) %>%
             magrittr::extract2("locb0.15_min_clust") %>%
             magrittr::extract2(iter$stim)
@@ -506,8 +529,8 @@ prep_data_raw <- function(rmd, iter, ...) {
             dplyr::mutate(sd = sd(resp, na.rm = TRUE),
                           iqr = quantile(.data[["resp"]], na.rm = TRUE, 0.75) -
                             quantile(.data[["resp"]], na.rm = TRUE, 0.25)) %>%
-            dplyr::filter(sd(resp, na.rm = TRUE) > 0.125,
-                          iqr > 0.2) %>%
+            dplyr::filter(sd(resp, na.rm = TRUE) > 0.1,
+                          iqr > 0.15) %>% # was 0.2
             dplyr::ungroup() %>%
             dplyr::select(-c(sd, iqr))
         },
@@ -565,9 +588,7 @@ prep_data_raw <- function(rmd, iter, ...) {
         "cd8_th1" =
           DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
         "tcrgd_th1" =
-          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass,
-        "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$compass,
-        "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$compass
+          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
       ) %>%
         magrittr::extract2("locb0.15_min_clust") %>%
         magrittr::extract2(iter$stim)
@@ -695,9 +716,7 @@ prep_data_raw <- function(rmd, iter, ...) {
         "cd8_th1" =
           DataTidyACSCyTOFCytokinesTCells::cd8_th1$compass,
         "tcrgd_th1" =
-          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass,
-        "nk_ifng_tnf_il22" = DataTidyACSCyTOFNKBCells::nk_ifng_tnf_il22$compass,
-        "bcell_ifng_il6" = DataTidyACSCyTOFNKBCells::bcell_ifng_il6$compass
+          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$compass
       ) %>%
         magrittr::extract2("locb0.15_min_clust") %>%
         magrittr::extract2(iter$stim)
@@ -848,19 +867,29 @@ prep_data_raw <- function(rmd, iter, ...) {
 
   switch(
     stage,
-    "outer" =   switch(
-      iter$var_dep,
-      "risk6" = TuberculomicsCompendium::signature_6gene %>%
-        tibble::as_tibble() %>%
-        dplyr::rename(resp = sig6gene_CorScore),
-      TuberculomicsCompendium::soma_data_tidy %>%
-        dplyr::filter(Soma_Target == iter$var_dep) %>%
-        dplyr::group_by_at(c("SubjectID", "VisitType", "Soma_Target")) %>%
-        dplyr::slice(1) %>%
-        dplyr::ungroup() %>%
-        dplyr::rename(resp = Soma_TransformedReadout) %>%
-        dplyr::select(SubjectID, VisitType, resp)
-    ),
+    "outer" =  {
+      if(grepl("^sing_", iter$var_dep)) {
+        data_raw <- DataTidyACSSinghania::data_tidy_singhania
+        data_raw <- data_raw[,c("SubjectID", "VisitType",
+                                gsub("^sing_", "", iter$var_dep))]
+        colnames(data_raw)[3] <- "resp"
+        return(data_raw)
+      }
+      switch(
+        iter$var_dep,
+        "risk6" = TuberculomicsCompendium::signature_6gene %>%
+          tibble::as_tibble() %>%
+          dplyr::rename(resp = sig6gene_CorScore),
+        TuberculomicsCompendium::soma_data_tidy %>%
+          dplyr::filter(Soma_Target == iter$var_dep) %>%
+          dplyr::group_by_at(c("SubjectID", "VisitType", "Soma_Target")) %>%
+          dplyr::slice(1) %>%
+          dplyr::ungroup() %>%
+          dplyr::rename(resp = Soma_TransformedReadout) %>%
+          dplyr::select(SubjectID, VisitType, resp)
+      )
+    }
+    ,
     "inner" = data_raw
   )
 
@@ -885,9 +914,21 @@ prep_iter <- function(rmd, iter, ...) {
     "hladr" = .prep_iter_identity,
     "inf_markers" = .prep_iter_identity,
     "flowsom" = .prep_iter_flowsom,
+    "faust" = .prep_iter_faust,
     stop(paste0("no .prep_iter fn defined for ", rmd))
   )
   .prep_iter(iter = iter, ...)
+}
+
+.prep_iter_faust <- function(iter, data_raw) {
+  purrr::map_df(unique(data_raw$den), function(den){
+    data_raw_den <- data_raw %>%
+      dplyr::filter(den == .env$den)
+    purrr::map_df(unique(data_raw_den$pop_sub_faust), function(pop_sub_faust){
+      iter %>%
+        dplyr::mutate(den = den, pop_sub_faust = pop_sub_faust)
+      })
+    })
 }
 
 .prep_iter_identity <- function(iter, ...) iter

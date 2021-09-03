@@ -32,6 +32,8 @@ get_folder <- function(nm, value) {
                 "rem_il6" = ifelse(value, "il6_e", "il6_i"),
                 "wins" = ifelse(value, "wins", "wins_n"),
                 "equi_d_knots" = ifelse(value, "eq_d", "eq_d_n"),
+                "den" = value,
+                "pop_sub_faust" = value,
                 "ds" =,
                 "dataset" = value,
                 "stim" = value,

@@ -182,7 +182,8 @@ add_clinical_data_and_filter <- function(.data,
 #' @title Add assay data
 add_tc_assay_data <- function(.data,
                               cols_add,
-                              cols_join) {
+                              cols_join,
+                              iter) {
 
   cn_orig <- colnames(.data)
 
@@ -209,7 +210,8 @@ add_tc_assay_data <- function(.data,
     .data <- .add_tc_assay_data(
       .data = .data,
       cols_add = assay_to_cols_add[[assay]],
-      cols_join = cols_join
+      cols_join = cols_join,
+      iter = iter
       )
   }
 
@@ -221,8 +223,9 @@ add_tc_assay_data <- function(.data,
 }
 
 .add_tc_assay_data_flow_ifng <- function(.data,
-                                    cols_add,
-                                    cols_join) {
+                                          cols_add,
+                                          cols_join,
+                                         ...) {
   var_tbl_add <-
     TuberculomicsCompendium::tidy_wb_cd4p_infgp_cells_hladr_mfi
 
@@ -236,7 +239,8 @@ add_tc_assay_data <- function(.data,
 
 .add_tc_assay_data_soma <- function(.data,
                                     cols_add,
-                                    cols_join) {
+                                    cols_join,
+                                    ...) {
 
   var_tbl_add <- TuberculomicsCompendium::soma_data_tidy %>%
     dplyr::filter(Soma_Target %in% cols_add) %>%
@@ -267,7 +271,8 @@ add_tc_assay_data <- function(.data,
 
 .add_tc_assay_data_risk6 <- function(.data,
                                      cols_add,
-                                     cols_join) {
+                                     cols_join,
+                                     ...) {
   .data <- .data %>%
     dplyr::inner_join(
       TuberculomicsCompendium::signature_6gene,
@@ -275,6 +280,32 @@ add_tc_assay_data <- function(.data,
     ) %>%
     dplyr::rename(risk6 = sig6gene_CorScore)
   .data[,c(cols_join, setdiff(colnames(.data), cols_join))]
+}
+
+.add_tc_assay_data_il2 <- function(.data,
+                                   cols_add,
+                                   cols_join,
+                                   iter,
+                                   ...) {
+
+  data_join <- switch(
+    cols_add,
+    "il2_prob" = {
+      DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass$locb0.15_min_clust[[iter$stim]]$fit
+    },
+    "il2_freq" = {
+
+    },
+    stop(paste0(paste0(cols_add, collapse = "/"), "not recognised"))
+  )
+
+  .data %>%
+    dplyr::inner_join(
+      data_join,
+      by = cols_join
+    )
+
+
 }
 
 

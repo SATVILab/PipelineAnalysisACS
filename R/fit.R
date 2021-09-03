@@ -58,6 +58,7 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj){
                                                         paste0('family = ', p_dots$family)),
                                         'glmmTMB' = paste0('family = ',
                                                            switch(p_dots$family,
+                                                                  "normal" = "gaussian()",
                                                                   "Beta" = ,
                                                                   'beta' = 'beta_family()',
                                                                   'gamma' = ,
