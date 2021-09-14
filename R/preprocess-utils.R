@@ -21,6 +21,7 @@ trans <- function(.data, trans) {
 
   trans_fn <- switch(
     trans,
+    "min_max" = ,
     "within_01" = function(x) {
       range_x <- range(x)
       diff_x <- diff(range_x)
@@ -30,10 +31,19 @@ trans <- function(.data, trans) {
       small_diff <- diff_x * 0.005
       pmax(small_diff, pmin(x, range_x[2] - small_diff))
     },
+    "nudge_off_01" = function(x) {
+      range_x <- range(x)
+      diff_x <- diff(range_x)
+      max_x <- max(1 - diff_x, max(x[x < 1]))
+      min_x <- min(diff_x, min(x[x > 0]))
+      pmax(min_x, pmin(x, max_x))
+    },
     "pos" = function(x) pmax(0, x),
     "pos_strict" = function(x) {
       range_x <- diff(range(x))
-      pmax(range_x * 0.01, x)
+      diff_x <- range_x * 0.01
+      min_x <-  min(diff_x, min(x[x > 0]))
+      pmax(min_x, x)
     },
     "sqrt" = sqrt,
     "sqrt_pos" = function(x) sqrt(pmax(0, x)),
@@ -340,4 +350,44 @@ remove_tc_assay_from_exp_s <- function(p_dots) {
   }
   names(p_dots$var_exp_spline) <- nm_vec
   p_dots
+}
+
+winsorise <- function(data_raw, wins, p_dots) {
+  if (wins == "wins_n") return(data_raw)
+
+  wins_var <- stringr::str_sub(wins, start = 6)
+  wins_var_vec <- purrr::map_chr(seq_len(stringr::str_length(wins_var)), function(i) {
+    stringr::str_sub(wins_var, i, i)
+  })
+  if ("y" %in% wins_var_vec) {
+    sd_var <- sd(data_raw$resp)
+    mad_var <- mad(data_raw$resp)
+    max_var <- max(
+      mean(data_raw$resp) + 2 * sd_var,
+      median(data_raw$resp) + 2 * mad_var
+    )
+    min_var <- min(
+      mean(data_raw$resp) - 2 * sd_var,
+      median(data_raw$resp) - 2 * mad_var
+    )
+    data_raw[, "resp"] <- pmax(pmin(data_raw$resp, max_var), min_var)
+  }
+  if ("x" %in% wins_var_vec) {
+    var_vec <- c(p_dots$var_exp, names(p_dots$var_exp_s))
+    for (var in var_vec) {
+      if(!is.numeric(data_mod[[var]])) next
+      sd_var <- sd(data_raw[[var]])
+      mad_var <- mad(data_raw[[var]])
+      max_var <- max(
+        mean(data_raw[[var]]) + 3 * sd_var,
+        median(data_raw[[var]]) + 3 * mad_var
+      )
+      min_var <- min(
+        mean(data_raw[[var]]) - 3 * sd_var,
+        median(data_raw[[var]]) - 3 * mad_var
+      )
+      data_raw[, var] <- pmax(pmin(data_raw[[var]], max_var), min_var)
+    }
+  }
+  var
 }

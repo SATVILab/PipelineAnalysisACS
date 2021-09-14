@@ -13,6 +13,7 @@ prep_data_raw <- function(rmd, iter, ...) {
     "hladr" = .prep_dr_hladr,
     "flowsom" = .prep_dr_flowsom,
     "faust" = .prep_dr_faust,
+    "faust_cyt" = .prep_dr_faust_cyt,
     stop(paste0(rmd, " not recognised in prep_data_raw")))
 
   .prep_data_raw(iter = iter, ...)
@@ -895,64 +896,201 @@ prep_data_raw <- function(rmd, iter, ...) {
 
 }
 
-# =========================
-# prep iter_outer
-# =========================
+.prep_dr_faust_cyt <- function(iter, stage, ...) {
 
-#' @title Prepare outer iterator
-#'
-#' @description Add or filter it, as needed.
-#'
-#' @export
-prep_iter <- function(rmd, iter, ...) {
-  if (is.null(names(iter$var_exp_spline))) {
-    iter$var_exp_spline <- iter$var_exp_spline[[1]]
-  }
-  .prep_iter <- switch(
-    rmd,
-    "cytokines" = .prep_iter_cytokines,
-    "hladr" = .prep_iter_identity,
-    "inf_markers" = .prep_iter_identity,
-    "flowsom" = .prep_iter_flowsom,
-    "faust" = .prep_iter_faust,
-    stop(paste0("no .prep_iter fn defined for ", rmd))
+  .prep_dr_faust_cyt_stage <- switch(
+    stage,
+    "outer" = switch(
+      names(iter$filter_approach[[1]]),
+      "filter" = .prep_dr_faust_cyt_filter,
+      "select" = .prep_dr_faust_cyt_select,
+      stop("iter$filter_approach not recognised")
+    ),
+    "inner" = .prep_dr_faust_cyt_inner,
+    stop("stage not inner or outer")
   )
-  .prep_iter(iter = iter, ...)
+
+  .prep_dr_faust_cyt_stage(
+    iter = iter,
+    ...
+  )
 }
 
-.prep_iter_faust <- function(iter, data_raw) {
-  purrr::map_df(unique(data_raw$den), function(den){
-    data_raw_den <- data_raw %>%
-      dplyr::filter(den == .env$den)
-    purrr::map_df(unique(data_raw_den$pop_sub_faust), function(pop_sub_faust){
-      iter %>%
-        dplyr::mutate(den = den, pop_sub_faust = pop_sub_faust)
-      })
-    })
+.prep_dr_faust_cyt_filter <- function(iter, data_raw, ...) {
+
+  # select pop
+  # ----------------------
+  data_raw <- DataTidyACSCyTOFCytokinesTCells::data_tidy_faust_cyt
+
+  data_raw <- data_raw %>%
+    dplyr::filter(pop == iter$pop,
+                  stim == iter$stim)
+
+  # make sure that counts are not NA
+  # ----------------------
+  data_raw <- data_raw %>%
+    dplyr::mutate(
+      count_uns = ifelse(is.na(count_uns), 0, count_uns),
+      count = ifelse(is.na(count), 0, count)
+    )
+
+  # calculate frequencies
+  # ---------------------
+
+  # select denominator for calculating frequencies
+  den <- switch(
+    iter$den,
+    "pop" = "n_cell_pop",
+    "pheno" = "n_cell_pheno",
+    stop("den not recognised")
+  )
+
+  data_raw <- data_raw %>%
+    cytoutils::calc_freq(
+      den = den,
+      num = "count",
+      nm = "freq_stim"
+    ) %>%
+    cytoutils::calc_freq(
+      den = paste0(den, "_uns"),
+      num = "count_uns",
+      nm = "freq_uns"
+    ) %>%
+    dplyr::mutate(
+      freq_bs = freq_stim - freq_uns
+    )
+
+  # filter based on suggested criteria
+  # ------------------------
+
+  f_l <- iter$filter_approach[[1]][[1]]
+
+  if ("fdr" %in% names(f_l)) {
+    filter_tbl_fdr <- data_raw %>%
+      dplyr::group_by(pop, pheno, stim, combn) %>%
+      dplyr::summarise(
+        p = switch(
+          as.character(quantile(.data$freq_stim, 0.75, na.rm = TRUE) == 0),
+          "TRUE" = 1,
+          wilcox.test(
+            x = .data$freq_stim,
+            y = .data$freq_uns,
+            paired = TRUE,
+            alternative = "greater"
+          )$p.value
+        ),
+        .groups = "drop"
+      ) %>%
+      dplyr::mutate(p_bh = p.adjust(p, method = "BH")) %>%
+      dplyr::filter(p_bh < f_l$fdr) %>%
+      dplyr::select(-p)
+
+    filter_tbl_fdr <- filter_tbl_fdr %>%
+      dplyr::select(pop, pheno, stim, combn)
+
+    data_raw <- data_raw %>%
+      dplyr::inner_join(
+        filter_tbl_fdr,
+        by = c("pop", "pheno", "stim", "combn")
+      )
+  }
+  if ("s2n" %in% names(f_l)) {
+    if("min" %in% names(f_l$s2n) &&
+       "max" %in% names(f_l$s2n)) {
+      if(f_l$s2n[["max"]] < f_l$s2n[["min"]]) {
+        stop("s2n filter has max val lower than min val")
+      }
+    }
+    filter_tbl_s2n <- data_raw %>%
+      dplyr::group_by(pop, pheno, stim, combn) %>%
+      dplyr::summarise(
+        sd = sd(freq_bs),
+        med = median(freq_bs),
+        s2n = med/sd,
+        .groups = "drop"
+      ) %>%
+      dplyr::filter(!is.nan(s2n)) %>%
+      dplyr::filter(s2n > 0)
+
+    min_val <- ifelse(
+      "q" %in% names(f_l$s2n),
+      quantile(filter_tbl_s2n$s2n, f_l$s2n[["q"]]),
+      0
+    )
+    min_val <- ifelse(
+      "max" %in% names(f_l$s2n),
+      min(min_val, f_l$s2n[["max"]]),
+      min_val
+    )
+    min_val <- ifelse(
+      "min" %in% names(f_l$s2n),
+      max(min_val, f_l$s2n[["min"]]),
+      min_val
+    )
+
+    filter_tbl_s2n <- filter_tbl_s2n %>%
+      dplyr::filter(s2n > min_val) %>%
+      dplyr::select(pop, pheno, stim, combn)
+
+    data_raw <- data_raw %>%
+      dplyr::inner_join(
+        filter_tbl_s2n,
+        by = c("pop", "pheno", "stim", "combn")
+      )
+  }
+  if("f2uns" %in% names(f_l)) {
+
+    filter_tbl_f2uns <- data_raw %>%
+      dplyr::group_by(pop, pheno, stim, combn) %>%
+      dplyr::summarise(
+        g = median(freq_stim) > (f_l$f2uns *
+                                   mad(freq_uns) + median(freq_uns)),
+        .groups = "drop"
+      ) %>%
+      dplyr::filter(g) %>%
+      dplyr::select(pop, pheno, stim, combn)
+
+    data_raw <- data_raw %>%
+      dplyr::inner_join(
+        filter_tbl_f2uns,
+        by = c("pop", "pheno", "stim", "combn")
+      )
+
+  }
+
+  if(iter$den == "pheno") {
+    data_raw %>%
+      dplyr::mutate(
+        n_cell = n_cell_pheno,
+        count_stim = count
+      )
+  } else {
+
+  }
+
+  data_raw[, "n_cell"] <- switch(
+    iter$den,
+    "pop" = data_raw$n_cell_pop,
+    "pheno" = data_raw$n_cell_pheno,
+    stop("den not recognised")
+  )
+
+  data_raw[, "resp"] <- pmax(0, data_raw$freq_bs * data_raw$n_cell / 1e2)
+
+  data_raw
+
 }
 
-.prep_iter_identity <- function(iter, ...) iter
+.prep_dr_faust_cyt_select <- function(iter, data_raw, ...) {
 
-.prep_iter_cytokines <- function(iter, data_raw) {
-
-  purrr::map_df(unique(data_raw$cyt_combn),
-                function(cyt_combn){
-                  iter %>%
-                    dplyr::mutate(
-                      cyt_response_type_grp = cyt_combn)
-                })
 }
 
-.prep_iter_flowsom <- function(iter, data_raw) {
-
-  if(nrow(data_raw) == 0) return(iter)
-
-  purrr::map_df(unique(data_raw$clust),
-                function(clust){
-                  iter %>%
-                    dplyr::mutate(
-                      clust = clust
-                      )
-                })
+.prep_dr_faust_cyt_inner <- function(iter, data_raw, ...) {
+  data_raw %>%
+    dplyr::filter(
+      pop == iter$pop,
+      stim == iter$stim,
+      combn == iter$combn,
+      pheno == iter$pheno
+    )
 }
-

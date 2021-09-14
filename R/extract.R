@@ -69,6 +69,17 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
     results_list %<>% append(list('lr' = lr_tbl))
   }
 
+  # non-parametric tests
+  np_tbl <- .get_np_results(
+    data_mod = data_mod,
+    p_dots = p_dots
+  )
+
+  results_list <- results_list %>%
+    append(list(
+      "np" = np_tbl
+    ))
+
   # save results
   pipeline::save_objects(obj_list = results_list,
                          dir_proj = p_dots$dir_stg,

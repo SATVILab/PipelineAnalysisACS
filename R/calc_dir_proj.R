@@ -28,13 +28,71 @@ get_folder <- function(nm, value) {
                     stringr::str_sub(value[[1]], end = min(nchar(value[[1]]), 3)),
                     collapse = "")
                 ),
+                "filter_approach" = switch(
+                  names(value[[1]]),
+                  "filter" = {
+                    out <- "fltr/"
+                    f_l <- value[[1]][[1]]
+                    for(i in seq_along(f_l)) {
+                      nm_elem <- names(f_l)[i]
+                      val_elem <- f_l[[i]]
+                      val_elem <- paste0(names(val_elem), val_elem, collapse = "_")
+                      out <- paste0(
+                        nm_elem, "_", val_elem
+                      )
+                    }
+                    out
+                    "filter"
+                  },
+                  "select" = {
+                    outer <- "slct/"
+                  },
+                  stop("names(iter$filter_approach) not recognised")
+                ),
+                "den" = value,
+                "pop" = value,
+                "combn" = {
+                  out <- ""
+                  cyt_vec <- c("IFNg-beads", "IL2", "IL6", "IL17", "IL22", "TNFa")
+                  for(cyt in cyt_vec) {
+                    pos <- stringr::str_locate(value, cyt)
+                    ind <- stringr::str_sub(value,
+                                            pos[, "end"] + 1,
+                                            pos[, "end"] + 1)
+                    if(grepl("\\+", ind)) {
+                      out <- paste0(out, cyt, "+")
+                    }
+                  }
+                  out
+                },
+                "pheno" = {
+                  full_pheno_label <- "CD4~2~2~HLA-DR-beads~1~2~CD8-IgD~1~3~CD3~2~2~CD7~2~2~CD27~1~2~TCRgd-CD19~1~2~CD33~1~2~CD16~1~2~CCR7~1~2~CXCR5~1~2~Perf-beads~1~2~CD45RA~1~2~CD14~1~2~CD161~1~2~CD20~1~2~"
+                  marker_vec <- stringr::str_split(full_pheno_label, "~\\d~\\d~")[[1]]
+                  marker_vec <- marker_vec[marker_vec != ""]
+                  out <- ""
+                  for(marker in marker_vec) {
+                    if(!grepl(marker, value)) next
+                    pos <- stringr::str_locate(value, marker)
+                    ind <- stringr::str_sub(value,
+                                            pos[, "end"] + 1,
+                                            pos[, "end"] + 1)
+                    if(grepl("\\+", ind)) {
+                      out <- paste0(out, marker, "+")
+                    }
+                  }
+                  out
+                },
                 "pkg" = value,
                 "rem_il6" = ifelse(value, "il6_e", "il6_i"),
-                "wins" = ifelse(value, "wins", "wins_n"),
+                "wins" = switch(
+                  as.character(is.logical(value)),
+                  "TRUE" = ifelse(value, "wins_y", "wins_n"),
+                  "FALSE" = value
+                ),
                 "equi_d_knots" = ifelse(value, "eq_d", "eq_d_n"),
                 "den" = value,
                 "pop_sub_faust" = value,
-                "ds" =,
+                "ds" = ,
                 "dataset" = value,
                 "stim" = value,
                 "var_dep" = value,
@@ -53,13 +111,15 @@ get_folder <- function(nm, value) {
                   is.null(value[[1]]),
                   "int_n",
                   "int"),
+                "mod" = value,
                 "var_exp_spline" =
                   switch(
                     as.character(identical(value, "none")),
                     "TRUE" = "exp_s-none",
                     "FALSE" = paste0(
 
-                      "exp_s-",
+                      #"exp_s-",
+                      "",
                       paste0(purrr::map_chr(seq_along(value), function(i) {
                         nm_curr <- names(value)[i]
                         if(grepl("^tc~", nm_curr)) {
