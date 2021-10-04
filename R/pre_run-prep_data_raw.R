@@ -920,7 +920,15 @@ prep_data_raw <- function(rmd, iter, ...) {
 
   # select pop
   # ----------------------
-  data_raw <- DataTidyACSCyTOFCytokinesTCells::data_tidy_faust_cyt
+  data_raw <- switch(
+    iter$pop,
+    "nk" = ,
+    "bcell" = DataTidyACSCyTOFCytokinesNKBCells::data_tidy_faust_cyt,
+    "cd4" = ,
+    "cd8" = ,
+    "tcrgd" = DataTidyACSCyTOFCytokinesTCells::data_tidy_faust_cyt,
+    stop("pop not recognised")
+  )
 
   data_raw <- data_raw %>%
     dplyr::filter(pop == iter$pop,

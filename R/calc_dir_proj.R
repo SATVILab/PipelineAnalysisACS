@@ -42,10 +42,13 @@ get_folder <- function(nm, value) {
                       )
                     }
                     out
+                    # override above
                     "filter"
                   },
                   "select" = {
                     outer <- "slct/"
+                    # override above
+                    "select"
                   },
                   stop("names(iter$filter_approach) not recognised")
                 ),
@@ -80,6 +83,7 @@ get_folder <- function(nm, value) {
                       out <- paste0(out, marker, "+")
                     }
                   }
+                  out <- ifelse(out == "", "all-", out)
                   out
                 },
                 "pkg" = value,

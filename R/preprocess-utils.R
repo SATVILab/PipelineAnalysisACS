@@ -389,5 +389,5 @@ winsorise <- function(data_raw, wins, p_dots) {
       data_raw[, var] <- pmax(pmin(data_raw[[var]], max_var), min_var)
     }
   }
-  var
+  data_raw
 }
