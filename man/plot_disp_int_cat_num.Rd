@@ -16,7 +16,10 @@ plot_disp_int_cat_num(
   cat_to_col = NULL,
   axis_lab = NULL,
   add_test = "lr",
-  dir_test
+  dir_test,
+  gg_theme = cowplot::theme_cowplot(),
+  grid = "xy",
+  point_size = NULL
 )
 }
 \description{

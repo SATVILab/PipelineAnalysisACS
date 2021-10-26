@@ -4,7 +4,7 @@
 \alias{add_tc_assay_data}
 \title{Add assay data}
 \usage{
-add_tc_assay_data(.data, cols_add, cols_join)
+add_tc_assay_data(.data, cols_add, cols_join, iter)
 }
 \description{
 Add assay data
