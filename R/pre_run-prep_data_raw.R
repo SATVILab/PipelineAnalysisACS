@@ -942,6 +942,34 @@ prep_data_raw <- function(rmd, iter, ...) {
       count = ifelse(is.na(count), 0, count)
     )
 
+  # sum over cytokine combinations, if required
+  # -----------------------
+  data_raw <- switch(
+    iter$pop,
+    "nk" = cytoutils::sum_over_markers(
+      .data = data_raw,
+      grp = c("SubjectID", "VisitType", "stim", "pop", "pheno",
+              "n_cell_pop", "n_cell_pop_uns", "n_cell_pheno",
+              "n_cell_pheno_uns"),
+      markers_to_sum = c("IL2", "IL6", "IL17"),
+      cmbn = "combn",
+      resp = c("count", "count_uns")
+    ),
+    "bcell" = cytoutils::sum_over_markers(
+      .data = data_raw,
+      grp = c("SubjectID", "VisitType", "stim", "pop", "pheno",
+              "n_cell_pop", "n_cell_pop_uns", "n_cell_pheno",
+              "n_cell_pheno_uns"),
+      markers_to_sum = c("IL2", "IL17", "IL22", "TNFa"),
+      cmbn = "combn",
+      resp = c("count", "count_uns")
+    ),
+    "cd4" = ,
+    "cd8" = ,
+    "tcrgd" = data_raw,
+    stop("pop not recognised")
+  )
+
   # calculate frequencies
   # ---------------------
 
