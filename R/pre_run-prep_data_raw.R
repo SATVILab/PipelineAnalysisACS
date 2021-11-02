@@ -29,6 +29,21 @@ prep_data_raw <- function(rmd, iter, ...) {
                       pop_sub_faust = pop) %>%
         dplyr::filter(stim == iter$stim)
 
+
+
+      if("pop" %in% names(iter)) {
+
+        pop_to_inc_vec <- switch(
+          iter$pop,
+          "nkbcell" = c("nk", "bcell"),
+          "tcell" = c("tcrgd", "cd8", "cd4")
+        )
+
+        data_raw <- data_raw %>%
+          dplyr::filter(
+            pop_main %in% pop_to_inc_vec
+          )
+      }
       data_raw %>%
         dplyr::bind_rows(
           data_raw %>%
