@@ -10,7 +10,8 @@
 preprocess <- function(data_raw, p_dots, dir_proj){
 
 
-  data_raw %<>% tibble::as_tibble()
+  data_raw <- data_raw %>%
+    tibble::as_tibble()
 
   # remove NA obs
   data_raw <- data_raw %>%

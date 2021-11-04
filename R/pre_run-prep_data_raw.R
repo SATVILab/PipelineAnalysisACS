@@ -770,7 +770,8 @@ prep_data_raw <- function(rmd, iter, ...) {
   )
 }
 
-.remove_combn_low_prob <- function(.data, compass_obj, quant_min, prob_min) {
+.remove_combn_low_prob <- function(.data, compass_obj,
+                                   quant_min, prob_min) {
 
   compass_mat_prob <- compass_obj
   rn_vec <- rownames(compass_mat_prob)
@@ -897,6 +898,9 @@ prep_data_raw <- function(rmd, iter, ...) {
           tibble::as_tibble() %>%
           dplyr::rename(resp = sig6gene_CorScore),
         TuberculomicsCompendium::soma_data_tidy %>%
+          dplyr::mutate(
+            Soma_Target = gsub("\\W", "", Soma_Target)
+          ) %>%
           dplyr::filter(Soma_Target == iter$var_dep) %>%
           dplyr::group_by_at(c("SubjectID", "VisitType", "Soma_Target")) %>%
           dplyr::slice(1) %>%

@@ -253,6 +253,10 @@ add_tc_assay_data <- function(.data,
                                     ...) {
 
   var_tbl_add <- TuberculomicsCompendium::soma_data_tidy %>%
+    dplyr::mutate(
+      # prevents failures when fitting formula later
+      Soma_Target = gsub("\\W", "", Soma_Target)
+    ) %>%
     dplyr::filter(Soma_Target %in% cols_add) %>%
     dplyr::group_by_at(c(cols_join, "Soma_Target")) %>%
     dplyr::slice(1) %>%
@@ -375,7 +379,7 @@ winsorise <- function(data_raw, wins, p_dots) {
   if ("x" %in% wins_var_vec) {
     var_vec <- c(p_dots$var_exp, names(p_dots$var_exp_s))
     for (var in var_vec) {
-      if(!is.numeric(data_mod[[var]])) next
+      if(!is.numeric(data_raw[[var]])) next
       sd_var <- sd(data_raw[[var]])
       mad_var <- mad(data_raw[[var]])
       max_var <- max(
