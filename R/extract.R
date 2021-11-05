@@ -8,15 +8,15 @@
 # - slice into even groups for kw if a continuous variable
 
 #' @export
-extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
-
+extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
   if (identical(class(fit_obj$full), "try-error")) {
     return(invisible(TRUE))
   }
   fit_obj <- fit_obj[
     purrr::map_lgl(
       fit_obj,
-      function(x) !identical(class(x), "try-error"))
+      function(x) !identical(class(x), "try-error")
+    )
   ]
 
   # prep
@@ -31,42 +31,49 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
   # -------------
   coef_tbl <- modutils::get_coef(fit_obj$full)
   # append results
-  results_list %<>% append(list('coef' = coef_tbl))
+  results_list %<>% append(list("coef" = coef_tbl))
 
   # wald
   # -------------
 
   # variables to test for in wald test
-  var_test_list <- list(p_dots$var_exp, names(p_dots$var_exp_spline),
-                        c(p_dots$var_exp, names(p_dots$var_exp_spline)))
+  var_test_list <- list(
+    p_dots$var_exp, names(p_dots$var_exp_spline),
+    c(p_dots$var_exp, names(p_dots$var_exp_spline))
+  )
   var_test_list <- var_test_list[!vapply(var_test_list, is.null, logical(1))]
 
   # get Wald stats
   wald_tbl <- modutils::test_wald(
-    fit_obj$full, var_test_list, match_cond = "any"
+    fit_obj$full, var_test_list,
+    match_cond = "any"
   )
 
   # append results
-  results_list %<>% append(list('wald' = wald_tbl))
+  results_list %<>% append(list("wald" = wald_tbl))
 
   # lr test
   # -------------
-  if(length(setdiff(names(fit_obj), "full")) > 0 && length(fit_obj) > 0){
+  if (length(setdiff(names(fit_obj), "full")) > 0 && length(fit_obj) > 0) {
     var_name_vec <- purrr::map_chr(
-      names(fit_obj[-which(names(fit_obj) == 'full')]),
-      function(x){
+      names(fit_obj[-which(names(fit_obj) == "full")]),
+      function(x) {
         ifelse(
           x == "null",
           paste0(c(p_dots$var_exp, names(p_dots$var_exp_spline)),
-                 collapse = "; "),
-          x)
-      })
+            collapse = "; "
+          ),
+          x
+        )
+      }
+    )
     lr_tbl <- modutils::test_lr(
       fit_obj$full,
-      fit_obj[-which(names(fit_obj) == 'full')],
-      var_name_vec)
+      fit_obj[-which(names(fit_obj) == "full")],
+      var_name_vec
+    )
 
-    results_list %<>% append(list('lr' = lr_tbl))
+    results_list %<>% append(list("lr" = lr_tbl))
   }
 
   # non-parametric tests
@@ -81,13 +88,16 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj){
     ))
 
   # save results
-  pipeline::save_objects(obj_list = results_list,
-                         dir_proj = p_dots$dir_stg,
-                         empty = FALSE)
-  pipeline::save_objects(obj_list = list("fit_stats" = results_list),
-                         dir_proj = p_dots$dir_stg,
-                         empty = FALSE)
+  pipeline::save_objects(
+    obj_list = results_list,
+    dir_proj = p_dots$dir_stg,
+    empty = FALSE
+  )
+  pipeline::save_objects(
+    obj_list = list("fit_stats" = results_list),
+    dir_proj = p_dots$dir_stg,
+    empty = FALSE
+  )
 
   results_list
-
 }

@@ -22,7 +22,8 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
       ),
       is_ttb_model = purrr::map_lgl(
         var_exp_spline_nm,
-        function(x) "tfmttb" %in% x)
+        function(x) "tfmttb" %in% x
+      )
     )
 
   # make ttb_max only have one value if it's not tfmttb as the
@@ -38,7 +39,8 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
     dplyr::ungroup() %>%
     dplyr::bind_rows(
       iter_tbl %>%
-        dplyr::filter(is_ttb_model))
+        dplyr::filter(is_ttb_model)
+    )
   iter_tbl <- iter_tbl %>%
     dplyr::select(-var_exp_spline_nm)
 
@@ -53,8 +55,11 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
     # set it equal to var_exp and names of var_exp_spline
     var_int_list <- purrr::map(seq_len(nrow(iter_tbl)), function(i) {
       var_int <- iter_tbl$var_int[i]
-      if (!var_int) return(NULL)
-      c(iter_tbl$var_exp[i],
+      if (!var_int) {
+        return(NULL)
+      }
+      c(
+        iter_tbl$var_exp[i],
         gsub("^tc~\\w+~", "", names(iter_tbl$var_exp_spline[[i]]))
       )
     })
@@ -68,7 +73,7 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
     if (remove_non_tfmttb_int_n) {
       iter_tbl <- iter_tbl %>%
         dplyr::filter(!(purrr::map_lgl(var_int, is.null) &
-                          !is_ttb_model))
+          !is_ttb_model))
     }
   }
 
@@ -81,36 +86,45 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
           names(var_exp_spline),
           function(nm) {
             identical(as.character(nm), "tc~flow_ifng~cd4_ifng_freq")
-          }) &
-            (ds != "cd4_th1_il17" |
-               cyt_response_type != "summed" |
-               purrr::map_lgl(var_int, function(x) !is.null(x)) |
-               stim != "mtb" |
-               purrr::map_lgl(var_conf, function(x) !x[[1]] == "none") |
-               wins))) %>%
-      dplyr::mutate(var_exp = ifelse(purrr::map_lgl(
-        names(var_exp_spline),
-        function(nm) {
-          identical(as.character(nm), "tc~flow_ifng~cd4_ifng_freq")
-        }),
+          }
+        ) &
+          (ds != "cd4_th1_il17" |
+            cyt_response_type != "summed" |
+            purrr::map_lgl(var_int, function(x) !is.null(x)) |
+            stim != "mtb" |
+            purrr::map_lgl(var_conf, function(x) !x[[1]] == "none") |
+            wins))
+      ) %>%
+      dplyr::mutate(
+        var_exp = ifelse(purrr::map_lgl(
+          names(var_exp_spline),
+          function(nm) {
+            identical(as.character(nm), "tc~flow_ifng~cd4_ifng_freq")
+          }
+        ),
         "cd4_ifng_freq",
-        var_exp),
+        var_exp
+        ),
         var_exp_spline = ifelse(purrr::map_lgl(
           names(var_exp_spline),
           function(nm) {
             identical(as.character(nm), "tc~flow_ifng~cd4_ifng_freq")
-          }),
-          "none",
-          var_exp_spline))
-
+          }
+        ),
+        "none",
+        var_exp_spline
+        )
+      )
   }
 
   # add boundary knots to tfmttb combinations
   iter_tbl <- set_boundary_knots(iter_tbl)
 
   # remove helping columns
-  iter_tbl <- iter_tbl[,!colnames(iter_tbl) %in% c("is_ttb_model",
-                                                   "var_exp_spline_nm")]
+  iter_tbl <- iter_tbl[, !colnames(iter_tbl) %in% c(
+    "is_ttb_model",
+    "var_exp_spline_nm"
+  )]
 
   iter_tbl
 }
@@ -119,7 +133,9 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
 # fix boundary knots if ttb_max is 630
 set_boundary_knots <- function(iter_tbl) {
   ttb_model_vec_lgl <- iter_tbl$is_ttb_model
-  if (!any(ttb_model_vec_lgl)) return(iter_tbl)
+  if (!any(ttb_model_vec_lgl)) {
+    return(iter_tbl)
+  }
   ttb_model_vec_ind <- which(ttb_model_vec_lgl)
   two_inner_knots_vec_lgl <- purrr::map_lgl(
     ttb_model_vec_ind,
@@ -127,14 +143,16 @@ set_boundary_knots <- function(iter_tbl) {
       iter_tbl$var_exp_spline[[i]]$tfmttb$params$knots %>%
         length() %>%
         magrittr::equals(2)
-    })
-  if(!any(two_inner_knots_vec_lgl)) return(iter_tbl)
+    }
+  )
+  if (!any(two_inner_knots_vec_lgl)) {
+    return(iter_tbl)
+  }
   set_bk_vec_ind <- ttb_model_vec_ind[two_inner_knots_vec_lgl]
   var_exp_spline_list <- iter_tbl %>%
     dplyr::pull(var_exp_spline)
   for (i in set_bk_vec_ind) {
-    if(iter_tbl$ttb_max[i] == 630) {
-
+    if (iter_tbl$ttb_max[i] == 630) {
       rep_list <- var_exp_spline_list[[i]]
       rep_list$tfmttb$params$Boundary.knots <- c(0.3, 4.5)
       var_exp_spline_list[[i]] <- rep_list
@@ -147,8 +165,7 @@ set_boundary_knots <- function(iter_tbl) {
 #' @title Return NULL if object is "none" or NULL
 #' @export
 set_none_to_null <- function(x, each_elem = TRUE) {
-  switch(
-    as.character(each_elem),
+  switch(as.character(each_elem),
     "TRUE" = purrr::map(x, .set_none_to_null) %>%
       setNames(names(x)),
     .set_none_to_null(x)
@@ -156,9 +173,10 @@ set_none_to_null <- function(x, each_elem = TRUE) {
 }
 
 .set_none_to_null <- function(x) {
-  if(class(try(x[[1]])) == "try-error") return(x)
-  switch(
-    as.character(identical(x[[1]], "none") || is.null(x[[1]])),
+  if (class(try(x[[1]])) == "try-error") {
+    return(x)
+  }
+  switch(as.character(identical(x[[1]], "none") || is.null(x[[1]])),
     "TRUE" = NULL,
     x
   )
@@ -173,23 +191,23 @@ set_none_to_null <- function(x, each_elem = TRUE) {
 #' @param ind integer. Row index of the iterator.
 #' @export
 print_iter <- function(iter, ind) {
-
-  if(ind == 1) {
+  if (ind == 1) {
     iter_old <- iter
 
     iter_old[, seq_len(ncol(iter_old))] <- "&$#("
   } else {
     iter_old <- parent.frame(2)$iter_old
-    if(!identical(
+    if (!identical(
       colnames(iter),
-      colnames(iter_old))
+      colnames(iter_old)
+    )
     ) {
       iter_old <- iter
       iter_old[, seq_len(ncol(iter_old))] <- "&$#("
     }
   }
   purrr::walk(seq_len(ncol(iter)), function(j) {
-    if(!identical(iter[[j]], iter_old[[j]])) {
+    if (!identical(iter[[j]], iter_old[[j]])) {
       cat("--- ", paste0(names(iter[[j]]), " ---\n"))
       cat(paste0(
         paste0(iter[[j]], collapse = "; "), "\n"
@@ -197,14 +215,18 @@ print_iter <- function(iter, ind) {
     }
   })
   iter_old <- iter
-  assign("iter_old", value = iter_old,
-         envir = parent.frame(2))
+  assign("iter_old",
+    value = iter_old,
+    envir = parent.frame(2)
+  )
   invisible(iter_old)
 }
 
 #' @export
 order_iter <- function(iter, factor_last = NULL) {
-  if (is.null(factor_last)) return(iter)
+  if (is.null(factor_last)) {
+    return(iter)
+  }
   order_vec_cn <- c(
     setdiff(colnames(iter), factor_last),
     factor_last[factor_last %in% colnames(iter)]

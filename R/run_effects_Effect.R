@@ -2,12 +2,12 @@
 #'
 #' @return output from \code{effects::Effect(focal.predictors = var, mod = mod, xlevels = 50)}.
 run_effects_Effect <- function(data, nm, var, mod) {
-
-  if(exists(nm, envir = .GlobalEnv)){ # if there is already data_mod
+  if (exists(nm, envir = .GlobalEnv)) { # if there is already data_mod
     # in global env, then set data_mod back to that upon exit
     data_glbl_akc <- get(nm, envir = .GlobalEnv)
     on.exit(assign(nm, data_glbl_akc, envir = .GlobalEnv),
-            add = TRUE)
+      add = TRUE
+    )
   }
 
   assign(x = nm, value = data, envir = .GlobalEnv)
@@ -17,5 +17,6 @@ run_effects_Effect <- function(data, nm, var, mod) {
   effects::Effect(
     focal.predictors = var,
     mod = mod,
-    xlevels = 50)
+    xlevels = 50
+  )
 }

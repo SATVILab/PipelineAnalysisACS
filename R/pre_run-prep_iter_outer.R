@@ -11,8 +11,7 @@ prep_iter <- function(rmd, iter, ...) {
   if (is.null(names(iter$var_exp_spline))) {
     iter$var_exp_spline <- iter$var_exp_spline[[1]]
   }
-  .prep_iter <- switch(
-    rmd,
+  .prep_iter <- switch(rmd,
     "cytokines" = .prep_iter_cytokines,
     "hladr" = .prep_iter_identity,
     "inf_markers" = .prep_iter_identity,
@@ -25,10 +24,10 @@ prep_iter <- function(rmd, iter, ...) {
 }
 
 .prep_iter_faust <- function(iter, data_raw) {
-  purrr::map_df(unique(data_raw$den), function(den){
+  purrr::map_df(unique(data_raw$den), function(den) {
     data_raw_den <- data_raw %>%
       dplyr::filter(den == .env$den)
-    purrr::map_df(unique(data_raw_den$pop_sub_faust), function(pop_sub_faust){
+    purrr::map_df(unique(data_raw_den$pop_sub_faust), function(pop_sub_faust) {
       iter %>%
         dplyr::mutate(den = den, pop_sub_faust = pop_sub_faust)
     })
@@ -36,13 +35,14 @@ prep_iter <- function(rmd, iter, ...) {
 }
 
 .prep_iter_faust_cyt <- function(iter, data_raw, ...) {
-
   dr_add_col_vec <- setdiff(
     c("pop", "pheno", "combn", "stim"),
     colnames(iter)
-    )
+  )
 
-  if(nrow(data_raw) == 0) return(iter)
+  if (nrow(data_raw) == 0) {
+    return(iter)
+  }
 
   data_raw_add <- data_raw %>%
     dplyr::select_at(dr_add_col_vec) %>%
@@ -52,7 +52,7 @@ prep_iter <- function(rmd, iter, ...) {
 
   purrr::map_df(seq_len(nrow(iter)), function(i) {
     iter_bind <- purrr::map_df(seq_len(nrow(data_raw_add)), function(x) {
-      iter[i,]
+      iter[i, ]
     })
     iter_bind %>%
       dplyr::bind_cols(
@@ -64,25 +64,29 @@ prep_iter <- function(rmd, iter, ...) {
 .prep_iter_identity <- function(iter, ...) iter
 
 .prep_iter_cytokines <- function(iter, data_raw, ...) {
-
-  purrr::map_df(unique(data_raw$cyt_combn),
-                function(cyt_combn){
-                  iter %>%
-                    dplyr::mutate(
-                      cyt_response_type_grp = cyt_combn)
-                })
+  purrr::map_df(
+    unique(data_raw$cyt_combn),
+    function(cyt_combn) {
+      iter %>%
+        dplyr::mutate(
+          cyt_response_type_grp = cyt_combn
+        )
+    }
+  )
 }
 
 .prep_iter_flowsom <- function(iter, data_raw, ...) {
+  if (nrow(data_raw) == 0) {
+    return(iter)
+  }
 
-  if(nrow(data_raw) == 0) return(iter)
-
-  purrr::map_df(unique(data_raw$clust),
-                function(clust){
-                  iter %>%
-                    dplyr::mutate(
-                      clust = clust
-                    )
-                })
+  purrr::map_df(
+    unique(data_raw$clust),
+    function(clust) {
+      iter %>%
+        dplyr::mutate(
+          clust = clust
+        )
+    }
+  )
 }
-

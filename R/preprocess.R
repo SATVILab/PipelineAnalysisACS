@@ -7,9 +7,7 @@
 #' @import glmmTMB
 #'
 #' @export
-preprocess <- function(data_raw, p_dots, dir_proj){
-
-
+preprocess <- function(data_raw, p_dots, dir_proj) {
   data_raw <- data_raw %>%
     tibble::as_tibble()
 
@@ -53,7 +51,7 @@ preprocess <- function(data_raw, p_dots, dir_proj){
     trans(trans = p_dots$trans)
 
   if (p_dots$family %in% c("bin", "betabin")) {
-    data_raw[,"resp"] <- data_raw[,"resp"] / data_raw[, "n_cell"]
+    data_raw[, "resp"] <- data_raw[, "resp"] / data_raw[, "n_cell"]
   }
 
   # winsorise, if need be
@@ -67,8 +65,10 @@ preprocess <- function(data_raw, p_dots, dir_proj){
 
   # scale measurements, if desired
   # ---------------------
-  cols_to_scale <- c("DaysSinceEntry",
-                     "tfmttb")
+  cols_to_scale <- c(
+    "DaysSinceEntry",
+    "tfmttb"
+  )
   data_raw <- data_raw %>%
     scale_var(cols = cols_to_scale)
 
