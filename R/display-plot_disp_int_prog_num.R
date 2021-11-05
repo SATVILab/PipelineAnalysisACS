@@ -1,15 +1,17 @@
 #' @title Plot model est and ci for int between cat and num exp var
-plot_disp_int_cat_num <- function(mod, .data, data_nm,
-                                  var_cat, var_num,
-                                  var_offset,
-                                  var_dep,
-                                  axis_x_reverse = FALSE,
-                                  cat_to_col = NULL, axis_lab = NULL,
-                                  add_test = "lr",
-                                  dir_test,
-                                  gg_theme = cowplot::theme_cowplot(),
-                                  grid = "xy",
-                                  point_size = NULL) {
+plot_disp_int_cat_num <- function (mod, .data, data_nm,
+                                   var_cat, var_num,
+                                   var_offset,
+                                   var_dep,
+                                   max_sd = NULL,
+                                   axis_x_reverse = FALSE,
+                                   cat_to_col = NULL,
+                                   axis_lab = NULL,
+                                   add_test = "lr",
+                                   dir_test,
+                                   gg_theme = cowplot::theme_cowplot(),
+                                   grid = "xy",
+                                   point_size = NULL) {
 
   # prep
   # --------------
@@ -26,9 +28,9 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
     as.data.frame() %>%
     tibble::as_tibble()
 
-
   # check if n_cell was used as number of offsets
-  n_cell_ind <- switch(as.character(is.null(var_offset)),
+  n_cell_ind <- switch(
+    as.character(is.null(var_offset)),
     "TRUE" = FALSE,
     "FALSE" = grepl("n_cell", var_offset)
   )
@@ -172,6 +174,7 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
     "FALSE" = cat_to_col
   )
 
+
   p <- p +
     scale_colour_manual(
       values = cat_to_col
@@ -216,6 +219,25 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
     max_pt <- max(plot_tbl_raw$resp)
     max_est <- quantile(plot_tbl_eff$upper, 0.75)
     max_val <- max(max_pt, max_est)
+
+    if (!is.null(max_sd)) {
+      sd_quant_vec <- c(
+        quantile(plot_tbl_raw$resp, 0.025),
+        quantile(plot_tbl_raw$resp, 0.975)
+      )
+      plot_tbl_raw_resp_restr <- plot_tbl_raw$resp[
+        plot_tbl_raw$resp >= sd_quant_vec[1] &
+          plot_tbl_raw$resp <= sd_quant_vec[2]
+      ]
+      sd_pt <- sd(plot_tbl_raw_resp_restr)
+      mean_pt <- mean(plot_tbl_raw_resp_restr)
+      sd_min_max_vec <- c(
+        mean_pt - max_sd * sd_pt,
+        mean_pt + max_sd * sd_pt
+      )
+      max_val <- min(max_val, sd_min_max_vec[2])
+    }
+
     p <- p + ggplot2::coord_cartesian(ylim = c(0, max_val))
     p_raw <- p_raw +
       coord_cartesian(ylim = c(0, max_val))
@@ -227,6 +249,25 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
     min_pt <- min(plot_tbl_raw$resp)
     min_est <- quantile(plot_tbl_eff$lower, 0.25)
     min_val <- min(min_pt, min_est)
+
+    if (!is.null(max_sd)) {
+      sd_quant_vec <- c(
+        quantile(plot_tbl_raw$resp, 0.025),
+        quantile(plot_tbl_raw$resp, 0.975)
+      )
+      plot_tbl_raw_resp_restr <- plot_tbl_raw$resp[
+        plot_tbl_raw$resp >= sd_quant_vec[1] &
+          plot_tbl_raw$resp <= sd_quant_vec[2]
+      ]
+      sd_pt <- sd(plot_tbl_raw_resp_restr)
+      mean_pt <- mean(plot_tbl_raw_resp_restr)
+      sd_min_max_vec <- c(
+        mean_pt - max_sd * sd_pt,
+        mean_pt + max_sd * sd_pt
+      )
+      min_val <- max(min_val, sd_min_max_vec[1])
+      max_val <- min(max_val, sd_min_max_vec[2])
+    }
 
     p <- p + ggplot2::coord_cartesian(ylim = c(min_val, max_val))
     p_raw <- p_raw +

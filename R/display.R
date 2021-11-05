@@ -19,9 +19,9 @@ display <- function(data_raw, data_mod, dir_proj,
     )
   ]
 
-  p_dots <- remove_tc_assay_from_exp_s(p_dots)
+  p_dots <- PipelineAnalysisACS:::remove_tc_assay_from_exp_s(p_dots)
 
-  theme_set(cowplot::theme_cowplot())
+  ggplot2::theme_set(cowplot::theme_cowplot())
 
   library(splines)
   on.exit(suppressWarnings(try(
@@ -30,23 +30,7 @@ display <- function(data_raw, data_mod, dir_proj,
   )))
 
 
-  # return(invisible(TRUE))
-
-  # goal is to plot residuals and CI's for every
-  # not sure what "every" is.
-  # I suppose I mean that we should plot them for every level
-  # of every factor/character var in c(var_exp, names(var_exp_spline)) and
-  # across the range of all continuous variables,
-  # and for the combination of the two:
-  # for both factors, then for each crossed combination.
-  # for one factor and the other continuous, then the response plotted for the
-  # continuous var .
-  # - could possibly log-transform automatically if the data are VERY skew.
-  # or the bulk of the data are very small relative to the total.
-  #
-  # should always include the intercept, definitely.
-
-  # check if old output is to be ignored
+  # goal is to plot residuals and CI's for every "point"
 
   # save auto effects pkg plot
   # -----------------
@@ -98,37 +82,49 @@ display <- function(data_raw, data_mod, dir_proj,
       stringr::str_to_upper(var_int_non_p)
     )
     axis_lab <- c(axis_lab_x, p_dots$var_dep)
-    p_list <- plot_disp_int_cat_num(
-      mod = fit_obj$full,
-      .data = data_mod,
-      data_nm = "data_mod",
-      var_num = var_int_non_p,
-      var_cat = "Progressor",
-      var_offset = p_dots$var_offset,
-      var_dep = p_dots$var_dep,
-      cat_to_col = c(
-        "yes" = "orange",
-        "no" = "dodgerblue"
-      ),
-      axis_lab = axis_lab,
-      axis_x_reverse = var_int_non_p == "tfmttb",
-      add_test = "lr",
-      dir_test = file.path(
-        dirname(p_dots$dir_stg),
-        "extr"
-      )
-    )
 
-    purrr::walk(c("pdf", "png"), function(gd) {
-      pipeline::save_objects(
-        obj_list = p_list,
-        dir_proj = p_dots$dir_stg,
-        empty = FALSE,
-        width = 19,
-        height = 15,
-        gg_device = gd
+    purrr::walk(c(Inf, 5), function(max_sd) {
+      p_dots <- rlang::caller_env(3)$p_dots
+      p_list <- plot_disp_int_cat_num(
+        mod = fit_obj$full,
+        .data = data_mod,
+        data_nm = "data_mod",
+        var_num = var_int_non_p,
+        var_cat = "Progressor",
+        var_offset = p_dots$var_offset,
+        var_dep = p_dots$var_dep,
+        max_sd = max_sd,
+        cat_to_col = c(
+          "yes" = "orange",
+          "no" = "dodgerblue"
+        ),
+        axis_lab = axis_lab,
+        axis_x_reverse = var_int_non_p == "tfmttb",
+        add_test = "lr",
+        dir_test = file.path(
+          dirname(p_dots$dir_stg),
+          "extr"
+        )
       )
+
+      p_list <- p_list[grepl("raw", names(p_list))]
+
+      names(p_list) <- paste0(
+        names(p_list),
+        ifelse(max_sd == Inf, "", paste0("_maxsd", max_sd))
+      )
+
+      purrr::walk(c("pdf", "png"), function(gd) {
+        pipeline::save_objects(
+          obj_list = p_list,
+          dir_proj = p_dots$dir_stg,
+          empty = FALSE,
+          width = 19,
+          height = 15,
+          gg_device = gd
+        )
     })
+  })
   }
   return(invisible(TRUE))
 }
