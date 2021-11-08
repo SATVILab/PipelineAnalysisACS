@@ -8,7 +8,13 @@ plot_disp_int_cat_num <- function (mod, .data, data_nm,
                                    cat_to_col = NULL,
                                    axis_lab = NULL,
                                    add_test = "lr",
+                                   trans = scales::identity_trans(),
                                    dir_test,
+                                   table_coord = c(0.1, 1),
+                                   table_size_skip = 0.05,
+                                   table_size_text = 10,
+                                   range_extend = 0,
+                                   limits_include = NULL,
                                    gg_theme = cowplot::theme_cowplot(),
                                    grid = "xy",
                                    point_size = NULL) {
@@ -274,12 +280,15 @@ plot_disp_int_cat_num <- function (mod, .data, data_nm,
       coord_cartesian(ylim = c(min_val, max_val))
   }
 
+
+
   p_list <- list(p, p_raw)
 
   # add a results table
   # ----------------
 
   if (!is.null(add_test)) {
+
     test_tbl <- readRDS(file.path(dir_test, paste0(add_test, ".rds")))
 
     test_tbl <- test_tbl %>%
@@ -303,15 +312,18 @@ plot_disp_int_cat_num <- function (mod, .data, data_nm,
     res_text <- paste0(test_tbl$var, ": ", signif(test_tbl$p, digits = 3))
 
     p_list <- purrr::map(p_list, function(p) {
-      p <- cowplot::ggdraw(p)
-      for (i in seq_along(res_text)) {
-        p <- p +
-          cowplot::draw_text(res_text[i],
-            x = 0.1675, y = 0.95 - 0.05 * (i - 1),
-            size = 12, hjust = 0
-          )
-      }
-      p
+      ggutils::add_text_column(
+        p = p,
+        x = range(c(plot_tbl_eff[[var_num]], plot_tbl_raw[[var_num]])),
+        y = switch(as.character(n_cell_ind),
+          "TRUE" = c(0, max_val),
+          "FALSE" = c(min_val, max_val)
+        ),
+        font_size = 5,
+        coord = c(0.05, 0.95),
+        skip = 0.06,
+        text = res_text
+      )
     })
   }
 
