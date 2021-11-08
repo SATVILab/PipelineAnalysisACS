@@ -320,7 +320,7 @@ plot_disp_int_cat_num <- function (mod, .data, data_nm,
           "FALSE" = c(min_val, max_val)
         ),
         font_size = 5,
-        coord = c(0.05, 0.95),
+        coord = c(ifelse(var_num == "tfmttb", 0.95, 0.05), 0.95),
         skip = 0.06,
         text = res_text
       )
