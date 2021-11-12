@@ -365,17 +365,17 @@ scale_var <- function(.data, cols = NULL) {
 
 
 remove_tc_assay_from_exp_s <- function(p_dots) {
-  nm_vec <- names(p_dots$var_exp_spline)
+  nm_vec <- names(iter$var_exp_spline)
   for (i in seq_along(nm_vec)) {
     nm <- nm_vec[i]
     if (!grepl("^tc~", nm)) next
     nm_vec[i] <- stringr::str_split(nm, "~")[[1]][3]
   }
-  names(p_dots$var_exp_spline) <- nm_vec
+  names(iter$var_exp_spline) <- nm_vec
   p_dots
 }
 
-winsorise <- function(data_raw, wins, p_dots) {
+winsorise <- function(data_raw, wins, p_dots, iter) {
   if (wins == "wins_n") {
     return(data_raw)
   }
@@ -398,7 +398,7 @@ winsorise <- function(data_raw, wins, p_dots) {
     data_raw[, "resp"] <- pmax(pmin(data_raw$resp, max_var), min_var)
   }
   if ("x" %in% wins_var_vec) {
-    var_vec <- c(p_dots$var_exp, names(p_dots$var_exp_s))
+    var_vec <- c(iter$var_exp, names(iter$var_exp_s))
     for (var in var_vec) {
       if (!is.numeric(data_raw[[var]])) next
       sd_var <- sd(data_raw[[var]])

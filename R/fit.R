@@ -2,7 +2,7 @@
 #' @import glmmTMB
 #'
 #' @export
-fit <- function(data_mod, data_raw, p_dots, dir_proj) {
+fit <- function(data_mod, data_raw, p_dots, dir_proj, iter) {
   if (nrow(data_mod) == 0) {
     stop("0 rows in data_mod")
   }
@@ -11,8 +11,6 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj) {
   # Preparation
   # ============================
 
-  p_dots <- remove_tc_assay_from_exp_s(p_dots)
-
   # list to save results to
   # ---------------------------
   mod_list <- list()
@@ -20,52 +18,57 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj) {
   # Model formulae
   # ---------------------------
 
-  if (identical(p_dots$var_offset, "none")) p_dots$var_offset <- NULL
-  if (identical(p_dots$var_conf, "none")) p_dots$var_conf <- NULL
-
+  if (identical(iter[["var_offset"]], "none") ||
+    !"var_offset" %in% colnames(iter)) {
+    iter$var_offset <- NULL
+  }
+  if (identical(iter[["var_conf"]], "none") ||
+    !"var_conf" %in% colnames(iter)) {
+    iter$var_conf <- NULL
+  }
   fml_as_chr_list <- modutils::get_mod_fml_as_chr(
-    var_dep = p_dots$var_dep,
-    var_exp = p_dots$var_exp,
-    var_exp_spline = p_dots$var_exp_spline,
-    var_re = p_dots$var_re,
-    var_offset = switch(as.character(is.null(p_dots$var_offset)),
+    var_dep = "resp",
+    var_exp = iter[["var_exp"]] %>% unlist(),
+    var_exp_spline = iter[["var_exp_spline"]],
+    var_re = iter[["var_re"]] %>% unlist(),
+    var_offset = switch(as.character(is.null(iter[["var_offset"]])),
       "TRUE" = NULL,
-      "FALSE" = paste0("log(", p_dots$var_offset, ")")
+      "FALSE" = paste0("log(", iter$var_offset, ")")
     ),
-    var_conf = p_dots$var_conf,
-    var_int = p_dots$var_int,
+    var_conf = iter[["var_conf"]] %>% unlist(),
+    var_int = iter[["var_int"]] %>% unlist(),
     rhs_text = NULL,
     int = TRUE,
-    sub_exp = p_dots$sub_exp
+    sub_exp = iter$sub_exp
   )
 
   # ============================
   # Fit models
   # ============================
 
-  mod_fn <- switch(p_dots$pkg,
-    "lme4" = switch(p_dots$family,
+  mod_fn <- switch(iter$pkg,
+    "lme4" = switch(iter$family,
       "nb" = paste0("lme4::glmer.nb"),
       "normal" = paste0("lme4::lmer"),
       "lme4::glmer"
     ),
     "glmmTMB" = "glmmTMB::glmmTMB",
-    paste0(p_dots$pkg, "::", p_dots$family)
+    paste0(iter$pkg, "::", iter$family)
   )
 
 
-  family_arg <- switch(as.character(is.null(p_dots$family)),
-    "FALSE" = switch(p_dots$pkg,
-      "lme4" = switch(p_dots$family,
+  family_arg <- switch(as.character(is.null(iter$family)),
+    "FALSE" = switch(iter$pkg,
+      "lme4" = switch(iter$family,
         "normal" = ,
         "nb" = NULL,
         "Gamma" = ,
         "gamma" = "Gamma(link = 'log')",
-        paste0("family = ", p_dots$family)
+        paste0("family = ", iter$family)
       ),
       "glmmTMB" = paste0(
         "family = ",
-        switch(p_dots$family,
+        switch(iter$family,
           "normal" = "gaussian()",
           "Beta" = ,
           "beta" = "beta_family()",
@@ -82,14 +85,14 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj) {
     "TRUE" = NULL
   )
 
-  family_arg <- switch(as.character(p_dots$family %in% c("betabin", "bin")),
+  family_arg <- switch(as.character(iter$family %in% c("betabin", "bin")),
     "TRUE" = paste0(family_arg, ", weights = data_mod$n_cell"),
     "FALSE" = family_arg
   )
 
   mod_arg_txt <- list(
     family_arg,
-    p_dots$mod_args,
+    iter[["mod_args"]],
     "data = data_mod"
   ) %>%
     purrr::compact() %>%
@@ -114,8 +117,8 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj) {
   if (class(mod_full) == "try-error") {
     mod_full <- modutils::refit_mod(
       mod_expr_as_chr = mod_expr_as_chr_full,
-      pkg = p_dots$pkg,
-      family = p_dots$family
+      pkg = iter$pkg,
+      family = iter$family
     )
   }
 
@@ -124,7 +127,7 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj) {
   }
 
   # get theta of full model for use in later models
-  theta_fix <- switch(as.character(p_dots$family == "nb" && p_dots$pkg == "lme4"),
+  theta_fix <- switch(as.character(iter$family == "nb" && iter$pkg == "lme4"),
     "TRUE" = lme4::getME(mod_full, "glmer.nb.theta"),
     "FALSE" = NULL,
     stop("switch statement incorrectly specified")
@@ -144,8 +147,8 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj) {
     if (class(mod) == "try-error") {
       mod_fix <- modutils::refit_mod(
         mod_expr_as_chr = mod_expr_as_chr,
-        pkg = p_dots$pkg,
-        family = p_dots$family,
+        pkg = iter$pkg,
+        family = iter$family,
         theta_fix = theta_fix
       )
     } else {
@@ -167,7 +170,7 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj) {
 
   save_objects(
     obj_list = list("mod_list" = mod_list),
-    dir_proj = p_dots$dir_stg
+    dir_proj = iter$dir_stg
   )
 
 

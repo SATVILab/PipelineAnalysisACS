@@ -7,6 +7,7 @@
 #' @importFrom rlang !! ensym :=
 #' @importFrom splines ns
 display <- function(data_raw, data_mod, dir_proj,
+                    iter,
                     p_dots, fit_obj,
                     fit_stats) {
   if (identical(class(fit_obj$full), "try-error")) {
@@ -18,8 +19,6 @@ display <- function(data_raw, data_mod, dir_proj,
       function(x) !identical(class(x), "try-error")
     )
   ]
-
-  p_dots <- PipelineAnalysisACS:::remove_tc_assay_from_exp_s(p_dots)
 
   ggplot2::theme_set(cowplot::theme_cowplot())
 
@@ -38,19 +37,16 @@ display <- function(data_raw, data_mod, dir_proj,
     mod = fit_obj$full,
     data_mod = data_mod,
     var = c(
-      p_dots$var_conf, names(p_dots$var_exp_spline),
-      p_dots$var_exp
+      iter$var_conf, names(iter$var_exp_spline),
+      iter$var_exp
     ),
-    dir_save = p_dots$dir_stg
+    dir_save = iter$dir_stg
   )
-
-
-
 
   # create plots of var_exp
   # -----------------------------
 
-  if ("cd4_ifng_freq" %in% names(p_dots$iter$var_exp_spline)) {
+  if ("cd4_ifng_freq" %in% names(iter$var_exp_spline)) {
     eff_obj <- effects::Effect(c("cd4_ifng_freq"),
       mod = mod_full,
       xlevels = 50
@@ -60,10 +56,10 @@ display <- function(data_raw, data_mod, dir_proj,
   # plot response against interaction with progressor
   # --------------
 
-  is_int <- !is.null(p_dots$var_int) # interaction present
-  var_int_non_p <- setdiff(p_dots$var_int, "Progressor")
+  is_int <- !is.null(iter$var_int) # interaction present
+  var_int_non_p <- setdiff(iter$var_int[[1]], "Progressor")
   if (is_int) {
-    is_int_prog <- "Progressor" %in% p_dots$var_int
+    is_int_prog <- "Progressor" %in% iter$var_int[[1]]
     # prog included
     is_int_prog_n_num <- is.numeric(data_mod[[var_int_non_p]]) # numeric
     plot_int <- is_int && is_int_prog && is_int_prog_n_num
@@ -72,27 +68,27 @@ display <- function(data_raw, data_mod, dir_proj,
     var_int_non_p <- "tfmttb"
   }
 
-  is_tfmttb_mod <- identical(
-    names(p_dots$var_exp_spline),
-    "tfmttb"
+  is_tfmttb_mod <- grepl(
+    "tfmttb",
+    names(iter$var_exp_spline),
   )
   if (plot_int || is_tfmttb_mod) {
     axis_lab_x <- ifelse(var_int_non_p == "tfmttb",
       "Days to TB",
       stringr::str_to_upper(var_int_non_p)
     )
-    axis_lab <- c(axis_lab_x, p_dots$var_dep)
+    axis_lab <- c(axis_lab_x, iter$var_dep)
 
     purrr::walk(c(Inf, 5), function(max_sd) {
-      p_dots <- rlang::caller_env(3)$p_dots
+      iter <- rlang::caller_env(3)$iter
       p_list <- plot_disp_int_cat_num(
         mod = fit_obj$full,
         .data = data_mod,
         data_nm = "data_mod",
         var_num = var_int_non_p,
         var_cat = "Progressor",
-        var_offset = p_dots$var_offset,
-        var_dep = p_dots$var_dep,
+        var_offset = iter[["var_offset"]],
+        var_dep = iter[["var_dep"]],
         max_sd = max_sd,
         cat_to_col = c(
           "yes" = "orange",
@@ -102,7 +98,7 @@ display <- function(data_raw, data_mod, dir_proj,
         axis_x_reverse = var_int_non_p == "tfmttb",
         add_test = "lr",
         dir_test = file.path(
-          dirname(p_dots$dir_stg),
+          dirname(iter$dir_stg),
           "extr"
         )
       )
@@ -117,14 +113,14 @@ display <- function(data_raw, data_mod, dir_proj,
       purrr::walk(c("pdf", "png"), function(gd) {
         pipeline::save_objects(
           obj_list = p_list,
-          dir_proj = p_dots$dir_stg,
+          dir_proj = iter$dir_stg,
           empty = FALSE,
           width = 19,
           height = 15,
           gg_device = gd
         )
+      })
     })
-  })
   }
   return(invisible(TRUE))
 }

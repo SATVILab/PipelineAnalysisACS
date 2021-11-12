@@ -4,8 +4,8 @@
 
 #' @title Prepare raw data for the run
 #' @export
-prep_data_raw <- function(rmd, iter, ...) {
-  .prep_data_raw <- switch(rmd,
+prep_data_raw <- function(rmd, iter, p_dots, ...) {
+  .prep_data_raw <- switch(iter$rmd,
     "cytokines" = .prep_dr_cytokines,
     "inf_markers" = .prep_dr_inf_markers,
     "hladr" = .prep_dr_hladr,
@@ -15,10 +15,10 @@ prep_data_raw <- function(rmd, iter, ...) {
     stop(paste0(rmd, " not recognised in prep_data_raw"))
   )
 
-  .prep_data_raw(iter = iter, ...)
+  .prep_data_raw(iter = iter, p_dots = p_dots, ...)
 }
 
-.prep_dr_faust <- function(iter, stage, data_raw, ...) {
+.prep_dr_faust <- function(iter, p_dots, stage, data_raw, ...) {
   switch(stage,
     "outer" = {
       data_raw <- DataTidyACSCyTOFFAUST::faust_data_tidy %>%
@@ -27,8 +27,6 @@ prep_data_raw <- function(rmd, iter, ...) {
           pop_sub_faust = pop
         ) %>%
         dplyr::filter(stim == iter$stim)
-
-
 
       if ("pop" %in% names(iter)) {
         pop_to_inc_vec <- switch(iter$pop,
@@ -74,7 +72,7 @@ prep_data_raw <- function(rmd, iter, ...) {
   )
 }
 
-.prep_dr_flowsom <- function(iter, stage, data_raw, ...) {
+.prep_dr_flowsom <- function(iter, p_dots, stage, data_raw, ...) {
   switch(stage,
     "outer" = {
 
@@ -132,9 +130,9 @@ prep_data_raw <- function(rmd, iter, ...) {
           count_stim, count_uns, prob
         ) %>%
         dplyr::filter(
-          median(prob, na.rm = TRUE) > 0.5, 
+          median(prob, na.rm = TRUE) > 0.5,
           (sum(!is.na(prob)) / dplyr::n()) > 0.75
-          ) %>%
+        ) %>%
         dplyr::ungroup()
 
       # add in total number of cells in sample
@@ -273,8 +271,8 @@ prep_data_raw <- function(rmd, iter, ...) {
       )
     },
     "inner" = switch(iter$response_type,
-      "freq_tot_bs" = ,
-      "freq_ag" = ,
+      "freq_tot_bs" = , # nolint
+      "freq_ag" = , # nolint
       "prob" = data_raw %>%
         dplyr::filter(.data$clust == iter$clust),
       stop(paste0(iter$response_type, " not recognised"))
@@ -282,7 +280,7 @@ prep_data_raw <- function(rmd, iter, ...) {
   )
 }
 
-.prep_dr_hladr <- function(iter, stage, data_raw, ...) {
+.prep_dr_hladr <- function(iter, p_dots, stage, data_raw, ...) {
   switch(stage,
     "outer" = {
       data_raw <- DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$hladr
@@ -334,7 +332,7 @@ prep_data_raw <- function(rmd, iter, ...) {
   )
 }
 
-.prep_dr_cytokines <- function(iter, stage, data_raw, ...) {
+.prep_dr_cytokines <- function(iter, p_dots, stage, data_raw, ...) {
   switch(as.character(!grepl("prob$|fs$", iter$cyt_response_type)),
     "TRUE" = .prep_dr_cytokines_freq(
       iter = iter,
@@ -357,6 +355,7 @@ prep_data_raw <- function(rmd, iter, ...) {
 }
 
 .prep_dr_cytokines_freq <- function(iter,
+                                    p_dots,
                                     stage,
                                     data_raw) {
   switch(stage,
@@ -413,7 +412,7 @@ prep_data_raw <- function(rmd, iter, ...) {
           ) %>%
           dplyr::mutate(cyt_combn = "summed") %>%
           dplyr::mutate(resp = freq_bs * n_cell),
-        "cyt_prop" = ,
+        "cyt_prop" = , # nolint
         "cyt" = {
           marker_vec <- stringr::str_split(unique(data_raw$cyt_combn),
             pattern = "\\+|\\-"
@@ -434,7 +433,7 @@ prep_data_raw <- function(rmd, iter, ...) {
               dplyr::filter(grepl("\\+", cyt_combn))
           })
         },
-        "combn" = ,
+        "combn" = , # nolint
         "combn_prop" = data_raw,
         stop(paste0(iter$cyt_response_type, " not"))
       )
@@ -443,7 +442,7 @@ prep_data_raw <- function(rmd, iter, ...) {
       # from analysis if not summed
       data_raw <- switch(iter$cyt_response_type,
         "summed" = data_raw,
-        "cyt_prop" = ,
+        "cyt_prop" = , # nolint
         "cyt" = {
           compass_obj <- switch(iter$ds,
             "cd4_th1_il17" =
@@ -471,7 +470,7 @@ prep_data_raw <- function(rmd, iter, ...) {
             prob_min = 0.8
           )
         },
-        "combn_prop" = ,
+        "combn_prop" = , # nolint
         "combn" = {
           compass_obj <- switch(iter$ds,
             "cd4_th1_il17" =
@@ -508,10 +507,10 @@ prep_data_raw <- function(rmd, iter, ...) {
 
       # remove individuals that didn't respond to anything
       data_raw <- switch(iter$cyt_response_type,
-        "summed" = ,
-        "cyt" = ,
+        "summed" = , # nolint
+        "cyt" = , # nolint
         "combn" = data_raw,
-        "cyt_prop" = ,
+        "cyt_prop" = , # nolint
         "combn_prop" = {
           prob_tbl <- switch(iter$ds,
             "cd4_th1_il17" =
@@ -542,10 +541,10 @@ prep_data_raw <- function(rmd, iter, ...) {
 
       # sum or calculate proportion (or do nothing)
       data_raw <- switch(iter$cyt_response_type,
-        "summed" = ,
-        "cyt" = ,
+        "summed" = , # nolint
+        "cyt" = , # nolint
         "combn" = data_raw,
-        "cyt_prop" = ,
+        "cyt_prop" = , # nolint
         "combn_prop" = {
           data_raw %>%
             dplyr::group_by(SubjectID, VisitType, stim) %>%
@@ -582,11 +581,11 @@ prep_data_raw <- function(rmd, iter, ...) {
     },
     "inner" = switch(iter$cyt_response_type,
       "summed" = data_raw,
-      "cyt" = ,
-      "cyt_prob" = ,
-      "cyt_prop" = ,
-      "combn" = ,
-      "combn_prob" = ,
+      "cyt" = , # nolint
+      "cyt_prob" = , # nolint
+      "cyt_prop" = , # nolint
+      "combn" = , # nolint
+      "combn_prob" = , # nolint
       "combn_prop" = {
         combn_comp <- paste0(
           "^",
@@ -623,6 +622,7 @@ prep_data_raw <- function(rmd, iter, ...) {
 }
 
 .prep_dr_cytokines_prob <- function(iter,
+                                    p_dots,
                                     stage,
                                     data_raw) {
   switch(stage,
@@ -723,7 +723,7 @@ prep_data_raw <- function(rmd, iter, ...) {
         dplyr::rename(resp = prob)
     },
     "inner" = switch(iter$cyt_response_type,
-      "cyt_prob" = ,
+      "cyt_prob" = , # nolint
       "combn_prob" = {
         combn_comp <- paste0(
           "^",
@@ -807,7 +807,7 @@ prep_data_raw <- function(rmd, iter, ...) {
         dplyr::mutate(cyt_combn = iter$cyt_response_type)
     },
     "inner" = switch(iter$cyt_response_type,
-      "fs" = ,
+      "fs" = , # nolint
       "pfs" = data_raw
     )
   )
@@ -979,10 +979,10 @@ prep_data_raw <- function(rmd, iter, ...) {
   # select pop
   # ----------------------
   data_raw <- switch(iter$pop,
-    "nk" = ,
+    "nk" = , # nolint
     "bcell" = DataTidyACSCyTOFCytokinesNKBCells::data_tidy_faust_cyt,
-    "cd4" = ,
-    "cd8" = ,
+    "cd4" = , # nolint
+    "cd8" = , # nolint
     "tcrgd" = DataTidyACSCyTOFCytokinesTCells::data_tidy_faust_cyt,
     stop("pop not recognised")
   )
@@ -1026,8 +1026,8 @@ prep_data_raw <- function(rmd, iter, ...) {
       cmbn = "combn",
       resp = c("count", "count_uns")
     ),
-    "cd4" = ,
-    "cd8" = ,
+    "cd4" = , # nolint
+    "cd8" = , # nolint
     "tcrgd" = data_raw,
     stop("pop not recognised")
   )
@@ -1066,8 +1066,7 @@ prep_data_raw <- function(rmd, iter, ...) {
     filter_tbl_fdr <- data_raw %>%
       dplyr::group_by(pop, pheno, stim, combn) %>%
       dplyr::summarise(
-        p = switch(
-          as.character(quantile(.data$freq_stim, 0.75, na.rm = TRUE) == 0),
+        p = switch(as.character(quantile(.data$freq_stim, 0.75, na.rm = TRUE) == 0),
           "TRUE" = 1,
           wilcox.test(
             x = .data$freq_stim,

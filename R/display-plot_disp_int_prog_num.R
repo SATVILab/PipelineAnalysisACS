@@ -1,23 +1,23 @@
 #' @title Plot model est and ci for int between cat and num exp var
-plot_disp_int_cat_num <- function (mod, .data, data_nm,
-                                   var_cat, var_num,
-                                   var_offset,
-                                   var_dep,
-                                   max_sd = NULL,
-                                   axis_x_reverse = FALSE,
-                                   cat_to_col = NULL,
-                                   axis_lab = NULL,
-                                   add_test = "lr",
-                                   trans = scales::identity_trans(),
-                                   dir_test,
-                                   table_coord = c(0.1, 1),
-                                   table_size_skip = 0.05,
-                                   table_size_text = 10,
-                                   range_extend = 0,
-                                   limits_include = NULL,
-                                   gg_theme = cowplot::theme_cowplot(),
-                                   grid = "xy",
-                                   point_size = NULL) {
+plot_disp_int_cat_num <- function(mod, .data, data_nm,
+                                  var_cat, var_num,
+                                  var_offset,
+                                  var_dep,
+                                  max_sd = NULL,
+                                  axis_x_reverse = FALSE,
+                                  cat_to_col = NULL,
+                                  axis_lab = NULL,
+                                  add_test = "lr",
+                                  trans = scales::identity_trans(),
+                                  dir_test,
+                                  table_coord = c(0.1, 1),
+                                  table_size_skip = 0.05,
+                                  table_size_text = 10,
+                                  range_extend = 0,
+                                  limits_include = NULL,
+                                  gg_theme = cowplot::theme_cowplot(),
+                                  grid = "xy",
+                                  point_size = NULL) {
 
   # prep
   # --------------
@@ -35,8 +35,7 @@ plot_disp_int_cat_num <- function (mod, .data, data_nm,
     tibble::as_tibble()
 
   # check if n_cell was used as number of offsets
-  n_cell_ind <- switch(
-    as.character(is.null(var_offset)),
+  n_cell_ind <- switch(as.character(is.null(var_offset)),
     "TRUE" = FALSE,
     "FALSE" = grepl("n_cell", var_offset)
   )
@@ -127,7 +126,7 @@ plot_disp_int_cat_num <- function (mod, .data, data_nm,
   # ------------------
 
   if (var_cat == "Progressor" && var_num == "tfmttb") {
-    ttb_max <- rlang::caller_env()$p_dots$iter$ttb_max
+    ttb_max <- rlang::caller_env()$iter$ttb_max
 
     plot_tbl_raw <- plot_tbl_raw %>%
       dplyr::mutate(tfmttb = ttb_max - (tfmttb * 1e2))
@@ -151,7 +150,7 @@ plot_disp_int_cat_num <- function (mod, .data, data_nm,
     plot_tbl_eff <- eff_tbl_prog %>%
       dplyr::bind_rows(eff_tbl_ctrl)
 
-    ttb_max <- rlang::caller_env()$p_dots$iter$ttb_max
+    ttb_max <- rlang::caller_env()$iter$ttb_max
 
     plot_tbl_eff <- plot_tbl_eff %>%
       dplyr::mutate(tfmttb = ttb_max - (tfmttb * 1e2))
@@ -288,7 +287,6 @@ plot_disp_int_cat_num <- function (mod, .data, data_nm,
   # ----------------
 
   if (!is.null(add_test)) {
-
     test_tbl <- readRDS(file.path(dir_test, paste0(add_test, ".rds")))
 
     test_tbl <- test_tbl %>%

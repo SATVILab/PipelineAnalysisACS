@@ -7,11 +7,11 @@
 #' @description Add or filter it, as needed.
 #'
 #' @export
-prep_iter <- function(rmd, iter, ...) {
+prep_iter <- function(rmd, iter, p_dots, ...) {
   if (is.null(names(iter$var_exp_spline))) {
     iter$var_exp_spline <- iter$var_exp_spline[[1]]
   }
-  .prep_iter <- switch(rmd,
+  .prep_iter <- switch(iter$rmd,
     "cytokines" = .prep_iter_cytokines,
     "hladr" = .prep_iter_identity,
     "inf_markers" = .prep_iter_identity,

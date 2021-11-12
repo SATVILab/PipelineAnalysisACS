@@ -1,13 +1,13 @@
-.get_np_results <- function(data_mod, p_dots) {
+.get_np_results <- function(data_mod, p_dots, iter) {
   resp_vec <- data_mod$resp
-  if (!is.null(p_dots$var_offset)) {
-    resp_vec <- resp_vec / data_mod[[p_dots$var_offset]]
+  if (!is.null(iter$var_offset)) {
+    resp_vec <- resp_vec / data_mod[[iter$var_offset]]
   }
 
-  if (names(p_dots$var_exp_spline) == "tfmttb") {
+  if (names(iter$var_exp_spline) == "tfmttb") {
     results_tbl_np <- tibble::tibble(var = character(0), p = numeric(0))
-    var_exp_s <- p_dots$var_exp_spline
-    params_list <- p_dots$var_exp_s[["tfmttb"]]$params
+    var_exp_s <- iter$var_exp_spline
+    params_list <- iter$var_exp_s[["tfmttb"]]$params
 
     exp_s_vec <- data_mod$tfmttb
     cat_vec_tfmttb <- cut(exp_s_vec,
@@ -64,13 +64,13 @@
     results_tbl_np <- results_tbl_np[c(3, 2, 1), ]
   } else {
     results_tbl_np <- tibble::tibble(var = character(0), p = numeric(0))
-    var_exp_s <- p_dots$var_exp_spline
+    var_exp_s <- iter$var_exp_spline
 
-    if (!is.null(p_dots$var_int)) {
-      cat_list <- purrr::map(p_dots$var_int, function(x) {
+    if (!is.null(iter$var_int)) {
+      cat_list <- purrr::map(iter$var_int[[1]], function(x) {
         exp_vec <- data_mod[[x]]
-        if (x %in% names(p_dots$var_exp_spline)) {
-          params_list <- p_dots$var_exp_s[[x]]$params
+        if (x %in% names(iter$var_exp_spline)) {
+          params_list <- iter$var_exp_spline[[x]]$params
           if ("df" %in% names(params_list)) {
             df <- params_list$df
             cat_vec <- cut(exp_vec, breaks = df + 1)
@@ -104,14 +104,14 @@
       results_tbl_np <- results_tbl_np %>%
         dplyr::bind_rows(
           tibble::tibble(
-            var = paste0(p_dots$var_int, collapse = "; "),
+            var = paste0(iter$var_int, collapse = "; "),
             p = p
           )
         )
     }
 
-    if (!is.null(p_dots$var_exp)) {
-      exp_vec <- data_mod[[p_dots$var_exp]]
+    if (!is.null(iter$var_exp)) {
+      exp_vec <- data_mod[[iter$var_exp]]
       if (is.numeric(exp_vec)) {
         exp_vec <- cut(exp_vec, breaks = df + 1)
       }
@@ -124,15 +124,15 @@
       results_tbl_np <- results_tbl_np %>%
         dplyr::bind_rows(
           tibble::tibble(
-            var = p_dots$var_exp,
+            var = iter$var_exp,
             p = p
           )
         )
     }
 
-    if (!is.null(p_dots$var_exp_s)) {
+    if (!is.null(iter$var_exp_s)) {
       df <- var_exp_s[[1]]$params$df
-      exp_s_vec <- data_mod[[names(p_dots$var_exp_spline)]]
+      exp_s_vec <- data_mod[[names(iter$var_exp_spline)]]
       cat_vec <- cut(exp_s_vec, breaks = df + 1)
       p <- kruskal.test(
         x = resp_vec,

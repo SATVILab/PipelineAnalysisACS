@@ -16,14 +16,7 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
   # ------------------
   iter_tbl <- iter_tbl %>%
     dplyr::mutate(
-      var_exp_spline_nm = purrr::map(
-        var_exp_spline,
-        names
-      ),
-      is_ttb_model = purrr::map_lgl(
-        var_exp_spline_nm,
-        function(x) "tfmttb" %in% x
-      )
+      is_ttb_model = grepl("tfmttb", names(var_exp_spline))
     )
 
   # make ttb_max only have one value if it's not tfmttb as the
@@ -41,8 +34,6 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
       iter_tbl %>%
         dplyr::filter(is_ttb_model)
     )
-  iter_tbl <- iter_tbl %>%
-    dplyr::select(-var_exp_spline_nm)
 
   # interaction
   # ------------------
@@ -60,7 +51,7 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
       }
       c(
         iter_tbl$var_exp[i],
-        gsub("^tc~\\w+~", "", names(iter_tbl$var_exp_spline[[i]]))
+        gsub("^tc~\\w+~", "", names(iter_tbl$var_exp_spline[i]))
       )
     })
 
@@ -77,53 +68,12 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
     }
   }
 
-  # only select one combination
-  # for ifng_freq
-  if (FALSE) {
-    iter_tbl <- iter_tbl %>%
-      dplyr::filter(
-        !(purrr::map_lgl(
-          names(var_exp_spline),
-          function(nm) {
-            identical(as.character(nm), "tc~flow_ifng~cd4_ifng_freq")
-          }
-        ) &
-          (ds != "cd4_th1_il17" |
-            cyt_response_type != "summed" |
-            purrr::map_lgl(var_int, function(x) !is.null(x)) |
-            stim != "mtb" |
-            purrr::map_lgl(var_conf, function(x) !x[[1]] == "none") |
-            wins))
-      ) %>%
-      dplyr::mutate(
-        var_exp = ifelse(purrr::map_lgl(
-          names(var_exp_spline),
-          function(nm) {
-            identical(as.character(nm), "tc~flow_ifng~cd4_ifng_freq")
-          }
-        ),
-        "cd4_ifng_freq",
-        var_exp
-        ),
-        var_exp_spline = ifelse(purrr::map_lgl(
-          names(var_exp_spline),
-          function(nm) {
-            identical(as.character(nm), "tc~flow_ifng~cd4_ifng_freq")
-          }
-        ),
-        "none",
-        var_exp_spline
-        )
-      )
-  }
-
   # add boundary knots to tfmttb combinations
-  iter_tbl <- set_boundary_knots(iter_tbl)
+  # iter_tbl <- set_boundary_knots(iter_tbl)
 
   # remove helping columns
   iter_tbl <- iter_tbl[, !colnames(iter_tbl) %in% c(
-    "is_ttb_model",
-    "var_exp_spline_nm"
+    "is_ttb_model"
   )]
 
   iter_tbl
@@ -166,8 +116,19 @@ set_boundary_knots <- function(iter_tbl) {
 #' @export
 set_none_to_null <- function(x, each_elem = TRUE) {
   switch(as.character(each_elem),
-    "TRUE" = purrr::map(x, .set_none_to_null) %>%
-      setNames(names(x)),
+    "TRUE" = {
+      # k is the number of replaced elements,
+      # as they are removed
+      k <- 0
+      for (i in seq_along(x)) {
+        i <- i - k
+        if (identical(x[[i]], "none")) {
+          x[, i] <- NULL
+          k <- 1
+        }
+      }
+      x
+    },
     .set_none_to_null(x)
   )
 }

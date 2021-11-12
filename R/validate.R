@@ -1,25 +1,23 @@
 #' @export
-validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
+validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
   theme_set(cowplot::theme_cowplot())
 
   # ===========================
   # Plot validation plots
   # ===========================
 
-  p_dots <- remove_tc_assay_from_exp_s(p_dots)
-
   # directory to save to
-  dir_save <- p_dots$dir_stg
+  dir_save <- iter$dir_stg
 
   # object to save plots to
   p_list <- list()
 
   # gather variables to make residuals against
-  var_plot_exp_vec <- c(p_dots$var_exp, names(p_dots$var_exp_spline))
+  var_plot_exp_vec <- c(iter$var_exp, names(iter$var_exp_spline))
   var_plot_vec <- c(".no_exp_var", var_plot_exp_vec) # adds variable meaning "no variables"
 
   # get residuals
-  var_extract_vec <- c(var_plot_exp_vec, p_dots$var_dep)
+  var_extract_vec <- c(var_plot_exp_vec, iter$var_dep)
   data_plot <- data_mod[, var_extract_vec] %>%
     dplyr::bind_cols(modutils::get_resid(fit_obj$full))
 
@@ -128,7 +126,7 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
     if (is.numeric(data_plot[[var]])) {
       data_plot[[var]] <- cut(data_plot[[var]], breaks = max(min(5, nrow(data_plot[[var]] - 2)), 1))
     }
-    p <- ggplot(data_plot, aes(x = !!sym(p_dots$var_dep), y = .resid_std)) +
+    p <- ggplot(data_plot, aes(x = !!sym(iter$var_dep), y = .resid_std)) +
       geom_hline(yintercept = 0) +
       cowplot::background_grid(major = "xy") +
       geom_point() +
@@ -166,7 +164,7 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
     if (is.numeric(data_plot[[var]])) {
       data_plot[[var]] <- cut(data_plot[[var]], breaks = max(min(5, nrow(data_plot[[var]] - 2)), 1))
     }
-    p <- ggplot(data_plot, aes(x = !!sym(p_dots$var_dep), y = .pred_resp)) +
+    p <- ggplot(data_plot, aes(x = !!sym(iter$var_dep), y = .pred_resp)) +
       geom_abline(intercept = 0, slope = 1) +
       cowplot::background_grid(major = "xy") +
       geom_point() +
@@ -205,16 +203,16 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
 
   var_exp_vec <- setdiff(var_plot_vec, ".no_exp_var")
   var_exp_list <- as.list(var_exp_vec) %>% append(list(var_exp_vec))
-  var_spline_vec <- names(p_dots$var_exp_spline)
-  knot_list <- switch(as.character(is.null(p_dots$var_exp_spline)),
+  var_spline_vec <- names(iter$var_exp_spline)
+  knot_list <- switch(as.character(is.null(iter$var_exp_spline)),
     "TRUE" = list(),
-    "FALSE" = map(p_dots$var_exp_spline, function(x) {
+    "FALSE" = map(iter$var_exp_spline, function(x) {
       if ("knots" %in% names(x$params)) {
         return(x$params$knots)
       }
       NULL
     }) %>%
-      setNames(names(p_dots$var_exp_spline))
+      setNames(names(iter$var_exp_spline))
   )
 
   break_list <- map(var_exp_vec, function(var) {
@@ -225,9 +223,9 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
       return(levels(data_mod[[var]]))
     }
     if (var %in% var_spline_vec) {
-      if ("knots" %in% names(p_dots$var_exp_spline[[var]]$params)) {
+      if ("knots" %in% names(iter$var_exp_spline[[var]]$params)) {
         break_vec <- c(
-          min(data_mod[[var]]), p_dots$var_exp_spline[[var]]$params$knots,
+          min(data_mod[[var]]), iter$var_exp_spline[[var]]$params$knots,
           max(data_mod[[var]])
         )
         break_vec <- unique(break_vec)
@@ -248,9 +246,9 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
   # browser()
   kw_obj <- map_df(var_exp_list, function(var_exp) {
     # print(var_exp)
-    resp_vec <- data_mod[[p_dots$var_dep]]
-    if (!is.null(p_dots$var_offset)) {
-      resp_vec <- resp_vec / data_mod[[p_dots$var_offset]]
+    resp_vec <- data_mod[[iter$var_dep]]
+    if (!is.null(iter$var_offset)) {
+      resp_vec <- resp_vec / data_mod[[iter$var_offset]]
     }
     for (i in seq_along(var_exp)) {
       if (i == 1) {

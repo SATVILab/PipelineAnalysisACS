@@ -8,7 +8,7 @@
 # - slice into even groups for kw if a continuous variable
 
 #' @export
-extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
+extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
   if (identical(class(fit_obj$full), "try-error")) {
     return(invisible(TRUE))
   }
@@ -21,8 +21,6 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
 
   # prep
   # -------------
-
-  p_dots <- remove_tc_assay_from_exp_s(p_dots)
 
   # list to save results to
   results_list <- list()
@@ -38,8 +36,8 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
 
   # variables to test for in wald test
   var_test_list <- list(
-    p_dots$var_exp, names(p_dots$var_exp_spline),
-    c(p_dots$var_exp, names(p_dots$var_exp_spline))
+    iter$var_exp, names(iter$var_exp_spline),
+    c(iter$var_exp, names(iter$var_exp_spline))
   )
   var_test_list <- var_test_list[!vapply(var_test_list, is.null, logical(1))]
 
@@ -60,7 +58,7 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
       function(x) {
         ifelse(
           x == "null",
-          paste0(c(p_dots$var_exp, names(p_dots$var_exp_spline)),
+          paste0(c(iter$var_exp, names(iter$var_exp_spline)),
             collapse = "; "
           ),
           x
@@ -73,13 +71,14 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
       var_name_vec
     )
 
-    results_list %<>% append(list("lr" = lr_tbl))
+    results_list <- results_list %>% append(list("lr" = lr_tbl))
   }
 
   # non-parametric tests
   np_tbl <- .get_np_results(
     data_mod = data_mod,
-    p_dots = p_dots
+    p_dots = p_dots,
+    iter = iter
   )
 
   results_list <- results_list %>%
@@ -90,12 +89,12 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj) {
   # save results
   pipeline::save_objects(
     obj_list = results_list,
-    dir_proj = p_dots$dir_stg,
+    dir_proj = iter$dir_stg,
     empty = FALSE
   )
   pipeline::save_objects(
     obj_list = list("fit_stats" = results_list),
-    dir_proj = p_dots$dir_stg,
+    dir_proj = iter$dir_stg,
     empty = FALSE
   )
 
