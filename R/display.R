@@ -56,7 +56,7 @@ display <- function(data_raw, data_mod, dir_proj,
   # plot response against interaction with progressor
   # --------------
 
-  is_int <- !is.null(iter$var_int) # interaction present
+  is_int <- !is.null(iter$var_int[[1]]) 
   var_int_non_p <- setdiff(iter$var_int[[1]], "Progressor")
   if (is_int) {
     is_int_prog <- "Progressor" %in% iter$var_int[[1]]
