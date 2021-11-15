@@ -7,7 +7,7 @@
   if (names(iter$var_exp_spline) == "tfmttb") {
     results_tbl_np <- tibble::tibble(var = character(0), p = numeric(0))
     var_exp_s <- iter$var_exp_spline
-    params_list <- iter$var_exp_s[["tfmttb"]]$params
+    params_list <- iter[["var_exp_spline"]][["tfmttb"]]$params
 
     exp_s_vec <- data_mod$tfmttb
     cat_vec_tfmttb <- cut(exp_s_vec,
@@ -130,7 +130,7 @@
         )
     }
 
-    if (!is.null(iter$var_exp_s)) {
+    if (!is.null(iter[["var_exp_spline"]])) {
       df <- var_exp_s[[1]]$params$df
       exp_s_vec <- data_mod[[names(iter$var_exp_spline)]]
       cat_vec <- cut(exp_s_vec, breaks = df + 1)
