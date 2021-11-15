@@ -64,7 +64,7 @@ preprocess <- function(data_raw, iter, p_dots, dir_proj) {
   data_raw <- winsorise(
     data_raw = data_raw,
     wins = wins,
-    p_dots = p_dots, 
+    p_dots = p_dots,
     iter = iter
   )
 
