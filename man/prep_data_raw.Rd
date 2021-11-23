@@ -4,7 +4,7 @@
 \alias{prep_data_raw}
 \title{Prepare raw data for the run}
 \usage{
-prep_data_raw(rmd, iter, ...)
+prep_data_raw(rmd, iter, p_dots, ...)
 }
 \description{
 Prepare raw data for the run

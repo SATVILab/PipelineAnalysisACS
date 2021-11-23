@@ -87,7 +87,10 @@ display <- function(data_raw, data_mod, dir_proj,
         data_nm = "data_mod",
         var_num = var_int_non_p,
         var_cat = "Progressor",
-        var_offset = iter[["var_offset"]],
+        var_offset = switch(
+          as.character(iter[["var_offset"]] == "none"),
+          "TRUE" = NULL,
+          iter[["var_offset"]],
         var_dep = iter[["var_dep"]],
         max_sd = max_sd,
         cat_to_col = c(

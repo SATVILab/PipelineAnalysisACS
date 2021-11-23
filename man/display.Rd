@@ -4,7 +4,7 @@
 \alias{display}
 \title{Fit plots}
 \usage{
-display(data_raw, data_mod, dir_proj, p_dots, fit_obj, fit_stats)
+display(data_raw, data_mod, dir_proj, iter, p_dots, fit_obj, fit_stats)
 }
 \description{
 Fit plots

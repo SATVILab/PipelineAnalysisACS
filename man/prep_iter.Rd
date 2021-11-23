@@ -4,7 +4,7 @@
 \alias{prep_iter}
 \title{Prepare outer iterator}
 \usage{
-prep_iter(rmd, iter, ...)
+prep_iter(rmd, iter, p_dots, ...)
 }
 \description{
 Add or filter it, as needed.

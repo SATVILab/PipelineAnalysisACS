@@ -4,7 +4,7 @@
 \alias{explore}
 \title{Make exploratory plots}
 \usage{
-explore(data_raw, data_mod, dir_proj, p_dots)
+explore(data_raw, data_mod, dir_proj, p_dots, iter)
 }
 \description{
 Make exploratory plots
