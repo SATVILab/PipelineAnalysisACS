@@ -75,11 +75,11 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
   }
 
   # non-parametric tests
-  np_tbl <- .get_np_results(
+  np_tbl <- try(.get_np_results(
     data_mod = data_mod,
     p_dots = p_dots,
     iter = iter
-  )
+  ))
 
   results_list <- results_list %>%
     append(list(
