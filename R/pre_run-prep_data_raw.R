@@ -46,6 +46,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
             dplyr::group_by(SubjectID, VisitType, stim, den, pop_main) %>%
             dplyr::summarise(
               resp = n_cell[1],
+              pop_main = den[1],
               pop_sub_faust = den[1]
             ) %>%
             dplyr::ungroup() %>%
@@ -54,15 +55,16 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
               data_raw %>%
                 dplyr::filter(den == "all") %>%
                 dplyr::select(
-                  SubjectID, VisitType, stim, n_cell, den, pop_main
+                  SubjectID, VisitType, stim, n_cell
                   ) %>%
                 dplyr::group_by(
-                  SubjectID, VisitType, stim, n_cell, den, pop_main
+                  SubjectID, VisitType, stim
                   ) %>%
                 dplyr::slice(1) %>%
                 dplyr::ungroup(),
               by = c("SubjectID", "VisitType", "stim")
-            )
+            ) %>%
+            dplyr::mutate(den = "all")
         ) %>%
         dplyr::select(
           SubjectID:stim, den, pop_main, pop_sub_faust, n_cell, resp
