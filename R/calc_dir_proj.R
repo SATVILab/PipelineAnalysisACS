@@ -107,7 +107,9 @@ get_folder <- function(nm, value) {
     "stim" = value,
     "var_dep" = value,
     "cyt_response_type" = value,
-    "var_offset" = paste0("o-", stringr::str_sub(value, end = min(nchar(value), 3)) %>%
+    "var_offset" = paste0(
+      "o-", stringr::str_sub(value, end = min(nchar(value), 3)
+      ) %>%
       paste0(collapse = "_")),
     "cyt_response_type_grp" = value,
     "response_type" = value,

@@ -27,9 +27,18 @@ prep_iter <- function(rmd, iter, p_dots, ...) {
   purrr::map_df(unique(data_raw$den), function(den) {
     data_raw_den <- data_raw %>%
       dplyr::filter(den == .env$den)
-    purrr::map_df(unique(data_raw_den$pop_sub_faust), function(pop_sub_faust) {
-      iter %>%
-        dplyr::mutate(den = den, pop_sub_faust = pop_sub_faust)
+    purrr::map_df(unique(data_raw_den$pop_main), function(pop_main) {
+      data_raw_den_pop_main <- data_raw_den %>%
+        dplyr::filter(pop_main == .env$pop_main)
+      purrr::map_df(unique(data_raw_den_pop_main$pop_sub_faust),
+        function(pop_sub_faust) {
+          iter %>%
+            dplyr::mutate(
+              den = den,
+              pop_main = pop_main,
+              pop_sub_faust = pop_sub_faust
+            )
+        })
     })
   })
 }

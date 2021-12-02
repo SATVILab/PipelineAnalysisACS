@@ -43,7 +43,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         dplyr::bind_rows(
           data_raw %>%
             dplyr::filter(den != "all") %>%
-            dplyr::group_by(SubjectID, VisitType, stim, den) %>%
+            dplyr::group_by(SubjectID, VisitType, stim, den, pop_main) %>%
             dplyr::summarise(
               resp = n_cell[1],
               pop_sub_faust = den[1]
@@ -53,19 +53,29 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
             dplyr::left_join(
               data_raw %>%
                 dplyr::filter(den == "all") %>%
-                dplyr::select(SubjectID, VisitType, stim, n_cell, den) %>%
-                dplyr::group_by(SubjectID, VisitType, stim, n_cell, den) %>%
+                dplyr::select(
+                  SubjectID, VisitType, stim, n_cell, den, pop_main
+                  ) %>%
+                dplyr::group_by(
+                  SubjectID, VisitType, stim, n_cell, den, pop_main
+                  ) %>%
                 dplyr::slice(1) %>%
                 dplyr::ungroup(),
               by = c("SubjectID", "VisitType", "stim")
             )
         ) %>%
-        dplyr::select(SubjectID:stim, den, pop_sub_faust, n_cell, resp)
+        dplyr::select(
+          SubjectID:stim, den, pop_main, pop_sub_faust, n_cell, resp
+        ) %>%
+        dplyr::mutate(
+          pop_main = ifelse(is.na(pop_main), pop_sub_faust, pop_main)
+        )
     },
     "inner" = {
       data_raw %>%
         dplyr::filter(
           den == iter$den,
+          pop_main == iter$pop_main,
           pop_sub_faust == iter$pop_sub_faust
         )
     }
@@ -959,7 +969,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 
 .prep_dr_faust_cyt <- function(iter, stage, ...) {
   .prep_dr_faust_cyt_stage <- switch(stage,
-    "outer" = switch(names(iter$filter_approach[[1]]),
+    "outer" = switch(names(iter$filter_approach),
       "filter" = .prep_dr_faust_cyt_filter,
       "select" = .prep_dr_faust_cyt_select,
       stop("iter$filter_approach not recognised")
@@ -1060,7 +1070,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   # filter based on suggested criteria
   # ------------------------
 
-  f_l <- iter$filter_approach[[1]][[1]]
+  f_l <- iter$filter_approach[[1]]
 
   if ("fdr" %in% names(f_l)) {
     filter_tbl_fdr <- data_raw %>%
