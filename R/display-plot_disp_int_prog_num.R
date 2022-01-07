@@ -317,9 +317,9 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
           "TRUE" = c(0, max_val),
           "FALSE" = c(min_val, max_val)
         ),
-        font_size = 5,
+        font_size = table_size_text,
         coord = c(ifelse(var_num == "tfmttb", 0.95, 0.05), 0.95),
-        skip = 0.06,
+        skip = table_size_skip,
         text = res_text
       )
     })
