@@ -14,6 +14,7 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
                                   table_size_skip = 0.05,
                                   table_size_text = 10,
                                   range_extend = 0,
+                                  point_alpha = 1,
                                   limits_include = NULL,
                                   gg_theme = cowplot::theme_cowplot(),
                                   grid = "xy",
@@ -201,7 +202,8 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
   # format raw data
   point_geom_list <- list(
     data = plot_tbl_raw,
-    aes(y = resp)
+    aes(y = resp),
+    alpha = point_alpha
   )
   point_geom_list <- point_geom_list %>%
     append(
