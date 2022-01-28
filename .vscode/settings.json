@@ -1,0 +1,9 @@
+{
+  "r.rpath.windows": "C:\\Program Files\\R\\R-3.6.3\\bin\\R.exe",
+  "r.rterm.option": [
+    "--r-binary=C:\\Program Files\\R\\R-3.6.3\\bin\\R.exe",
+    "--no-save",
+    "--no-restore",
+    "radian"
+  ]
+}
