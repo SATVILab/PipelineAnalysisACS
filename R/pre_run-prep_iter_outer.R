@@ -18,6 +18,7 @@ prep_iter <- function(rmd, iter, p_dots, ...) {
     "flowsom" = .prep_iter_flowsom,
     "faust" = .prep_iter_faust,
     "faust_cyt" = .prep_iter_faust_cyt,
+    "pepseq" = .prep_iter_identity,
     stop(paste0("no .prep_iter fn defined for ", rmd))
   )
   .prep_iter(iter = iter, ...)

@@ -12,10 +12,25 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     "flowsom" = .prep_dr_flowsom,
     "faust" = .prep_dr_faust,
     "faust_cyt" = .prep_dr_faust_cyt,
+    "faust_cyt_tot" = .prep_dr_faust_cyt_tot,
+    "pepseq" = .prep_dr_pepseq,
     stop(paste0(rmd, " not recognised in prep_data_raw"))
   )
 
   .prep_data_raw(iter = iter, p_dots = p_dots, ...)
+}
+
+.prep_dr_pepseq <- function(iter, p_dots, stage, data_raw, ...) {
+  switch(stage,
+    "outer" = {
+      data_raw <- DataTidyACSPepSeq::data_tidy_pepseq %>%
+        dplyr::filter(virus == iter$virus)
+      data_raw
+    },
+    "inner" = {
+      data_raw
+    }
+  )
 }
 
 .prep_dr_faust <- function(iter, p_dots, stage, data_raw, ...) {
@@ -379,6 +394,14 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   )
 }
 
+.prep_cd4_eff_mem <- function() {
+  data_raw <- DataTidyACSCyTOFFAUST::faust_data_tidy %>%
+    dplyr::filter(stim %in% c("mtb", "p1")) %>%
+    dplyr::filter(pop_main == "cd4")
+
+
+}
+
 .prep_dr_cytokines_freq <- function(iter,
                                     p_dots,
                                     stage,
@@ -396,7 +419,13 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           DataTidyACSCyTOFCytokinesNKBCells::nk_ifng_tnf_il22$stats_combn_tbl,
         "bcell_ifng_il6" =
           DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$stats_combn_tbl,
+        # START HERE!!!! This is nfor the effector memory analysis
+        "cd4_eff_mem" = .prep_cd4_eff_mem()
       )
+
+      if (iter$ds == "cd4_eff_mem") {
+        return(data_raw)
+      }
 
       # select required columns
       data_raw <- data_raw %>%
@@ -1025,6 +1054,23 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   )
 }
 
+.prep_dr_faust_cyt_tot <- function(iter, stage, ...) {
+  .prep_dr_faust_cyt_tot_stage <- switch(stage,
+    "outer" = switch(names(iter$filter_approach),
+      "filter" = .prep_dr_faust_cyt_tot_filter,
+      "select" = .prep_dr_faust_cyt_tot_select,
+      stop("iter$filter_approach not recognised")
+    ),
+    "inner" = .prep_dr_faust_cyt_tot_inner,
+    stop("stage not inner or outer")
+  )
+
+  .prep_dr_faust_cyt_stage(
+    iter = iter,
+    ...
+  )
+}
+
 .prep_dr_faust_cyt_filter <- function(iter, data_raw, ...) {
 
   # select pop
@@ -1051,6 +1097,69 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       count_uns = ifelse(is.na(count_uns), 0, count_uns),
       count = ifelse(is.na(count), 0, count)
     )
+
+  # calculate summed response
+  # -----------------------
+
+  data_raw_summed <- cytoutils::sum_over_markers(
+    .data = data_raw,
+    grp = c(
+      "SubjectID", "VisitType", "stim", "pop", "pheno",
+      "n_cell_pop", "n_cell_pop_uns", "n_cell_pheno",
+      "n_cell_pheno_uns"
+    ),
+    markers_to_sum = c("IL2", "IL6", "IL17", "IFNg-beads", "IL22", "TNFa"),
+    cmbn = "combn",
+    resp = c("count", "count_uns")
+  )
+
+  if (!identical(unique(data_raw_summed$combn), "")) {
+    stop("combn not summed over correctly")
+  }
+
+  data_raw_summed <- data_raw_summed %>%
+    dplyr::mutate(combn = "summed")
+
+  # calculate summed response
+  # -----------------------
+
+  data_raw_summed <- cytoutils::sum_over_markers(
+    .data = data_raw,
+    grp = c(
+      "SubjectID", "VisitType", "stim", "pop", "pheno",
+      "n_cell_pop", "n_cell_pop_uns", "n_cell_pheno",
+      "n_cell_pheno_uns"
+    ),
+    markers_to_sum = c("IL2", "IL6", "IL17", "IFNg-beads", "IL22", "TNFa"),
+    cmbn = "combn",
+    resp = c("count", "count_uns")
+  )
+
+  if (!identical(unique(data_raw_summed$combn), "")) {
+    stop("combn not summed over correctly")
+  }
+
+  data_raw_summed <- data_raw_summed %>%
+    dplyr::mutate(combn = "summed")
+
+
+  # calculate memory and effector responses
+  # ----------------------------------------
+  cytoutils::sum_over_markers(
+    .data = data_raw,
+    grp = c(
+      "SubjectID", "VisitType", "stim", "pop", "pheno",
+      "n_cell_pop", "n_cell_pop_uns", "n_cell_pheno",
+      "n_cell_pheno_uns"
+    ),
+    markers_to_sum = c("CD7"),
+    cmbn = "pheno",
+    resp = c("count", "count_uns")
+  )
+
+  # calculate all markers plus one responses
+  # ----------------------------------------
+
 
   # sum over cytokine combinations, if required
   # -----------------------
@@ -1082,6 +1191,11 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     "tcrgd" = data_raw,
     stop("pop not recognised")
   )
+
+  data_raw <- data_raw_summed %>%
+    dplyr::bind_rows(data_raw)
+
+
 
   # calculate frequencies
   # ---------------------
@@ -1117,7 +1231,13 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     filter_tbl_fdr <- data_raw %>%
       dplyr::group_by(pop, pheno, stim, combn) %>%
       dplyr::summarise(
-        p = switch(as.character(quantile(.data$freq_stim, 0.75, na.rm = TRUE) == 0),
+        p = switch(
+          as.character(
+            quantile(
+              .data$freq_stim,
+              0.75, na.rm = TRUE
+            ) == 0
+            ),
           "TRUE" = 1,
           wilcox.test(
             x = .data$freq_stim,
@@ -1164,6 +1284,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       quantile(filter_tbl_s2n$s2n, f_l$s2n[["q"]]),
       0
     )
+
     min_val <- ifelse(
       "max" %in% names(f_l$s2n),
       min(min_val, f_l$s2n[["max"]]),
