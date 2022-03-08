@@ -27,7 +27,7 @@ Imports:
 Suggests: 
     PipelineAnalysisACS,
     pipeline,
-    DataACSCyTOFTFAUST,
+    DataACSCyTOFFAUST,
     DataACSCyTOFTCytokinesTCells,
     DataACSCyTOFTCytokinesNKBCells,
     DataACSCyTOFTAntibody,
@@ -36,6 +36,6 @@ Suggests:
 Remotes:
     SATVILab/pipeline,
     SATVILab/PipelineAnalysisACS,
-    SATVILab/DataACSCyTOFTFAUST,
+    SATVILab/DataACSCyTOFFAUST,
     SATVILab/DataACSCyTOFTCytokinesTCells
 RoxygenNote: 7.1.2
