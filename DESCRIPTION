@@ -12,9 +12,7 @@ Description: The acscompendium analyses multiple datasets.
     these various analysis packages. 
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
-Suggests: 
-    testthat (>= 3.0.0)
+LazyData: true   
 Config/testthat/edition: 3
 Imports: 
     magrittr,
@@ -26,5 +24,19 @@ Imports:
     stringr,
     dplyr,
     ggplot2
+Suggests: 
+    PipelineAnalysisACS,
+    pipeline,
+    DataACSCyTOFTFAUST,
+    DataACSCyTOFTCytokinesTCells,
+    DataACSCyTOFTCytokinesNKBCells,
+    DataACSCyTOFTAntibody,
+    testthat (>= 3.0.0),
+    gitcreds
+Remotes:
+    SATVILab/pipeline,
+    SATVILab/PipelineAnalysisACS,
+    SATVILab/DataACSCyTOFTFAUST,
+    SATVILab/DataACSCyTOFTCytokinesTCells
 RoxygenNote: 7.1.1
 
