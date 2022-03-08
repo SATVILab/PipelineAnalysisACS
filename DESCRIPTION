@@ -27,15 +27,15 @@ Imports:
 Suggests: 
     PipelineAnalysisACS,
     pipeline,
-    DataACSCyTOFFAUST,
-    DataACSCyTOFTCytokinesTCells,
-    DataACSCyTOFTCytokinesNKBCells,
-    DataACSCyTOFTAntibody,
+    DataTidyACSCyTOFFAUST,
+    DataTidyACSCyTOFTCytokinesTCells,
+    DataTidyACSCyTOFTCytokinesNKBCells,
+    DataTidyACSCyTOFTAntibody,
     testthat (>= 3.0.0),
     gitcreds
 Remotes:
     SATVILab/pipeline,
     SATVILab/PipelineAnalysisACS,
-    SATVILab/DataACSCyTOFFAUST,
-    SATVILab/DataACSCyTOFTCytokinesTCells
+    SATVILab/DataTidyACSCyTOFFAUST,
+    SATVILab/DataTidyACSCyTOFTCytokinesTCells
 RoxygenNote: 7.1.2
