@@ -1,5 +1,5 @@
 #' @title Install private GitHub package dependencies
-#' 
+#'
 #' @param update logical.
 #' If \code{FALSE}, then a package would
 #' not be installed if it is already installed,
@@ -8,10 +8,18 @@
 #' @param project
 #' "acs_cytof_tcells", "acs_cytof_nkbcells", "antibody".
 #' Determines which packages are required for installation.
-install_pkg_private <- function(update = FALSE, project) {
-  
+#' @param gitcreds_url
+#' URL connected with GitHub PAT.
+#' Passed to url argument of
+#' \code{gitcreds::gitcreds_get}.
+#' Default is \code{"https://github.com"}
+install_pkg_private <- function(project,
+                                update = FALSE,
+                                gitcreds_url = "https://github.com" # nolint
+                                ) {
+
   repo_vec_github_private <- switch(
-    project.
+    project,
     "acs_cytof_tcells" = c(
       "FredHutch/TuberculomicsCompendium",
       "SATVILab/pipeline",
@@ -53,10 +61,17 @@ install_pkg_private <- function(update = FALSE, project) {
   repo_vec_github_private_to_install <- # nolint
     repo_vec_github_private[repo_vec_github_private_to_install_ind] # nolint
   if (length(repo_vec_github_private_to_install) > 0) {
+
+    if (!requireNamespace("gitcreds", quietly = TRUE)) {
+      install.packages("gitcreds")
+    }
+    if (!requireNamespace("remotes", quietly = TRUE)) {
+      install.packages("remotes")
+    }
     remotes::install_github(
       repo_vec_github_private_to_install,
       auth_token = gitcreds::gitcreds_get(
-        url = "https://github.com",
+        url = gitcreds_url,
         use_cache = TRUE
       )$password
     )
