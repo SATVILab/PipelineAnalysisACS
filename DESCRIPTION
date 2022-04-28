@@ -26,7 +26,6 @@ Imports:
     ggplot2,
     effects
 Suggests: 
-    PipelineAnalysisACS,
     pipeline,
     DataTidyACSCyTOFFAUST,
     DataTidyACSCyTOFCytokinesTCells,
