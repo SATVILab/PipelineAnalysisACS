@@ -2,6 +2,7 @@
 
 export(add_clinical_data_and_filter)
 export(calc_dir_proj)
+export(cross_df_safe)
 export(display)
 export(explore)
 export(extract)

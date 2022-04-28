@@ -8,7 +8,7 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
 
   # cross factors
   iter_tbl <- iter_list %>%
-    datautils::cross_df_safe()
+    cross_df_safe()
 
   # have only one ttb_max
   # level for non-tfmttb models

@@ -28,14 +28,9 @@ Suggests:
     PipelineAnalysisACS,
     pipeline,
     DataTidyACSCyTOFFAUST,
-    DataTidyACSCyTOFTCytokinesTCells,
-    DataTidyACSCyTOFTCytokinesNKBCells,
-    DataTidyACSCyTOFTAntibody,
+    DataTidyACSCyTOFCytokinesTCells,
+    DataTidyACSCyTOFCytokinesNKBCells,
+    DataTidyACSAntibody,
     testthat (>= 3.0.0),
     gitcreds
-Remotes:
-    SATVILab/pipeline,
-    SATVILab/PipelineAnalysisACS,
-    SATVILab/DataTidyACSCyTOFFAUST,
-    SATVILab/DataTidyACSCyTOFTCytokinesTCells
 RoxygenNote: 7.1.2
