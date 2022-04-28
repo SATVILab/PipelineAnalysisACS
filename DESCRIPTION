@@ -25,14 +25,16 @@ Imports:
     dplyr,
     ggplot2,
     effects,
-    pander
+    pander,
+    UtilsGGMR (>= 0.1.0)
 Suggests: 
     pipeline,
     DataTidyACSCyTOFFAUST,
     DataTidyACSCyTOFCytokinesTCells,
     DataTidyACSCyTOFCytokinesNKBCells,
-    UtilsGGMR,
     DataTidyACSAntibody,
     testthat (>= 3.0.0),
     gitcreds
 RoxygenNote: 7.1.2
+Remotes:  
+    SATVILab/UtilsGGMR
