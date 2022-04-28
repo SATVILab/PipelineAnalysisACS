@@ -24,7 +24,8 @@ Imports:
     stringr,
     dplyr,
     ggplot2,
-    effects
+    effects,
+    pander
 Suggests: 
     pipeline,
     DataTidyACSCyTOFFAUST,
