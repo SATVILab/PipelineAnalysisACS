@@ -312,7 +312,7 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
     res_text <- paste0(test_tbl$var, ": ", signif(test_tbl$p, digits = 3))
 
     p_list <- purrr::map(p_list, function(p) {
-      ggutils::add_text_column(
+      UtilsGGMR::add_text_column(
         p = p,
         x = range(c(plot_tbl_eff[[var_num]], plot_tbl_raw[[var_num]])),
         y = switch(as.character(n_cell_ind),

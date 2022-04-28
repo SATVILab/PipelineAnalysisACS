@@ -30,6 +30,7 @@ Suggests:
     DataTidyACSCyTOFFAUST,
     DataTidyACSCyTOFCytokinesTCells,
     DataTidyACSCyTOFCytokinesNKBCells,
+    UtilsGGMR,
     DataTidyACSAntibody,
     testthat (>= 3.0.0),
     gitcreds
