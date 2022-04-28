@@ -23,7 +23,8 @@ Imports:
     tidyr,
     stringr,
     dplyr,
-    ggplot2
+    ggplot2,
+    effects
 Suggests: 
     PipelineAnalysisACS,
     pipeline,
