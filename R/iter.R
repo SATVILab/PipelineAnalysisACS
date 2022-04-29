@@ -6,6 +6,13 @@
 #' is \code{TRUE}.
 get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
 
+  ind_vec_null <- which(sapply(iter_list, is.null))
+  for (i in seq_along(ind_vec_null)) {
+    iter_list[[ind_vec_null[i]]] <- list(NULL)
+  }
+
+  iter_list <- iter_list[!names(iter_list) %in% nm_vec_null_col]
+
   # cross factors
   iter_tbl <- iter_list %>%
     cross_df_safe()
