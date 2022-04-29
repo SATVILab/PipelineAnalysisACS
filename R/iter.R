@@ -12,8 +12,10 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
   }
 
   # cross factors
-  iter_tbl <- iter_list %>%
-    cross_df_safe()
+  iter_tbl <- do.call(
+    tidyr::expand_grid,
+    args = iter_list
+  )
 
   # have only one ttb_max
   # level for non-tfmttb models
