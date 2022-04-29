@@ -23,7 +23,10 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
   # ------------------
   iter_tbl <- iter_tbl %>%
     dplyr::mutate(
-      is_ttb_model = grepl("tfmttb", names(var_exp_spline))
+      is_ttb_model = sapply(
+        iter_tbl$var_exp_spline,
+        function(x) grepl("tfmttb", names(x))
+      )
     )
 
   # make ttb_max only have one value if it's not tfmttb as the
@@ -44,34 +47,35 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
 
   # interaction
   # ------------------
-
   if ("var_int" %in% names(iter_list)) {
-    # remove it for tfmttb and prog model
-    iter_tbl <- iter_tbl %>%
-      dplyr::filter(!(is_ttb_model & var_int))
-
-    # set it equal to var_exp and names of var_exp_spline
-    var_int_list <- purrr::map(seq_len(nrow(iter_tbl)), function(i) {
-      var_int <- iter_tbl$var_int[i]
-      if (!var_int) {
-        return(NULL)
-      }
-      c(
-        iter_tbl$var_exp[i],
-        gsub("^tc~\\w+~", "", names(iter_tbl$var_exp_spline[i]))
-      )
-    })
-
-    # add it to tbl
-    iter_tbl <- iter_tbl %>%
-      dplyr::mutate(var_int = var_int_list)
-
-    # force interaction terms-only
-    # when exp_s is not tfmttb
-    if (remove_non_tfmttb_int_n) {
+    if (!all(sapply(iter_tbl$var_int, is.null))) {
+      # remove it for tfmttb and prog model
       iter_tbl <- iter_tbl %>%
-        dplyr::filter(!(purrr::map_lgl(var_int, is.null) &
-          !is_ttb_model))
+        dplyr::filter(!(is_ttb_model & var_int))
+
+      # set it equal to var_exp and names of var_exp_spline
+      var_int_list <- purrr::map(seq_len(nrow(iter_tbl)), function(i) {
+        var_int <- iter_tbl$var_int[i]
+        if (!var_int) {
+          return(NULL)
+        }
+        c(
+          iter_tbl$var_exp[i],
+          gsub("^tc~\\w+~", "", names(iter_tbl$var_exp_spline[i]))
+        )
+      })
+
+      # add it to tbl
+      iter_tbl <- iter_tbl %>%
+        dplyr::mutate(var_int = var_int_list)
+
+      # force interaction terms-only
+      # when exp_s is not tfmttb
+      if (remove_non_tfmttb_int_n) {
+        iter_tbl <- iter_tbl %>%
+          dplyr::filter(!(purrr::map_lgl(var_int, is.null) &
+            !is_ttb_model))
+      }
     }
   }
 
