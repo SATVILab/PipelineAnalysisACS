@@ -149,7 +149,7 @@ get_var <- function(iter,
 #' @param var character vector.
 #' Variables to add not specificied by iter.
 #' @export
-.get_var_clin <- function(var,
+get_var_clin <- function(var,
                           var_clin_possible = c(
                             "DaysSinceEntry",
                             "AgeAtLastBirthDay",
