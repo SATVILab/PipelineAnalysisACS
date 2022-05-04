@@ -98,6 +98,66 @@ prep_bs_freq <- function(.data, cyt_response_type) {
 }
 
 #' @export
+get_var <- function(iter,
+                    iter_cn = c(
+                      "var_dep",
+                      "var_offset",
+                      "var_re",
+                      "var_conf",
+                      "var_exp",
+                      "var_exp_spline",
+                      ),
+                    var = NULL) {
+  # force exact matches
+  if (!tibble::is_tibble(iter)) {
+    if (is.data.frame(iter)) {
+      iter <- tibble::as_tibble(iter)
+    } else {
+      stop ("iter must be a tibble", .call = FALSE)
+    }
+  }
+
+  # add var_exp_spline entries
+  if ("var_exp_spline" %in% iter_cn) {
+    var_vec_exp_spline <- vapply(
+      iter$var_exp_spline, function(x) x$var,
+      character(1)
+    )
+  } else var_vec_exp_spline <- NULL
+
+  # add other variables than var_exp_spline
+  iter_cn_vec_non_exp_spline <- setdiff(iter_cn, "var_exp_spline")
+  var_vec_other <- NULL
+  for (i in seq_along(iter_cn_vec_non_exp_spline)) {
+    var_vec_other <- c(
+      var_vec_other,
+      iter[[iter_cn_vec_non_exp_spline[i]]] %>%
+        unlist() %>%
+        setNames(NULL)
+    )
+  }
+
+  unique(c(var_vec_exp_spline, var_vec_other, var))
+}
+
+#' @title Get clinical variables to add to a dataset
+#'
+#' @param iter one-row dataframe.
+#' @param iter_cn character vector.
+#' Names of columns in
+#' \code{iter} to get clinical variable names from.
+#' @param var character vector.
+#' Variables to add not specificied by iter.
+#' @export
+.get_var_clin <- function(var,
+                          var_clin_possible = c(
+                            "DaysSinceEntry",
+                            "AgeAtLastBirthDay",
+                            "tfmttb"
+                          )) {
+  intersect(var, var_clin_possible)
+}
+#' @export
 #'
 #' @param
 #'
