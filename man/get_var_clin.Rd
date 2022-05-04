@@ -4,10 +4,7 @@
 \alias{get_var_clin}
 \title{Get clinical variables to add to a dataset}
 \usage{
-get_var_clin(
-  var,
-  var_clin_possible = c("DaysSinceEntry", "AgeAtLastBirthDay", "tfmttb")
-)
+get_var_clin(var, var_clin_possible)
 }
 \arguments{
 \item{var}{character vector.

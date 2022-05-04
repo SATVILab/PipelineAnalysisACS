@@ -1,8 +1,18 @@
+
+#' @title Put variables into correct format
+#' 
+#' @export
 fortify_vars <- function(iter, regex = "var_*", cn = NULL, default_ds = "data_raw") {
+  stopifnot(is.list(iter))
   if (!is.null(regex)) {
+    iter_nm_vec <- switch(
+      as.character(is.data.frame(iter)),
+      "TRUE" = colnames(iter),
+      "FALSE" = names(iter)
+    )
     cn <- c(
       cn,
-      colnames(iter)[grepl(regex, colnames(iter))]
+      iter_nm_vec[grepl(regex, iter_nm_vec)]
     )
   }
   cn <- unique(cn)
@@ -19,7 +29,7 @@ fortify_vars <- function(iter, regex = "var_*", cn = NULL, default_ds = "data_ra
   iter
 }
 .fortify_var <- function(elem, default_ds) {
-  if (is.null(elem)) return(elem)
+  if (is.null(elem)) return(list(NULL))
   if (identical(list(NULL), elem)) return(elem)
   if (!is.list(elem) && is.vector(elem)) {
     elem_out <- lapply(elem, function(x) {
@@ -54,7 +64,6 @@ fortify_vars <- function(iter, regex = "var_*", cn = NULL, default_ds = "data_ra
   }
   elem_out
 }
-
 #' @export
 filter_using_list <- function(.data, filter_list) {
   for (i in seq_along(filter_list)) {
