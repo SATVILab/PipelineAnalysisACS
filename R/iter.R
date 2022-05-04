@@ -88,7 +88,7 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
   )]
 
   iter_tbl
-}
+ }
 
 
 # fix boundary knots if ttb_max is 630
