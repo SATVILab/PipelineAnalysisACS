@@ -68,7 +68,7 @@ prep_bs_freq <- function(.data, cyt_response_type) {
   # sum over cytokines
   .data <- switch(cyt_response_type,
     "summed" = .data %>%
-      cytoutils::sum_over_markers(
+      UtilsCytoRSV::sum_over_markers(
         grp = c(
           "batch_sh", "SubjectID", "VisitType",
           "stim", "n_cell_stim", "n_cell_uns"
