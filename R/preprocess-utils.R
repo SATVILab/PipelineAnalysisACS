@@ -120,7 +120,7 @@ get_var <- function(iter,
   # add var_exp_spline entries
   if ("var_exp_spline" %in% iter_cn) {
     var_vec_exp_spline <- vapply(
-      iter$var_exp_spline, function(x) x$var,
+      iter$var_exp_spline, function(x) x[[1]]$var,
       character(1)
     )
   } else var_vec_exp_spline <- NULL
