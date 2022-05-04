@@ -21,13 +21,29 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
   # level for non-tfmttb models
   # and set it equal to "-"
   # ------------------
-  iter_tbl <- iter_tbl %>%
-    dplyr::mutate(
-      is_ttb_model = sapply(
-        iter_tbl$var_exp_spline,
-        function(x) grepl("tfmttb", names(x))
-      )
+  var_vec <- colnames(iter_tbl)[grepl("^var_", iter_tbl)]
+  iter_tbl[["is_ttb_model"]] <- FALSE
+  for (i in seq_along(var_vec)) {
+    val_vec <- iter_tbl[[var_vec[[i]]]]
+    all_null <- all(is.null(val_vec))
+    if (all_null) next
+    all_null_list <- vapply(
+      val_vec, function(x) identical(x, list(NULL)), logical(1)
+      ) %>%
+      all()
+    if (all_null_list) next
+    is_ttb_model_vec <- vapply(
+      iter_tbl[[var_vec[[i]]]],
+      function(x) {
+        vapply(x, function(.x) {
+          x$nm == "tfmttb"
+        }, logical(1)) %>%
+          any()
+      }, logical(1) %>%
+        any()
     )
+    iter_tbl[["is_ttb_model"]] <- iter_tbl[["is_ttb_model"]] | is_ttb_model_vec
+  }
 
   # make ttb_max only have one value if it's not tfmttb as the
   # explanatory variable
@@ -88,8 +104,8 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
   )]
 
   iter_tbl
- }
 
+}
 
 # fix boundary knots if ttb_max is 630
 set_boundary_knots <- function(iter_tbl) {
