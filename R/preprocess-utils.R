@@ -105,7 +105,7 @@ get_var <- function(iter,
                       "var_re",
                       "var_conf",
                       "var_exp",
-                      "var_exp_spline",
+                      "var_exp_spline"
                       ),
                     var = NULL) {
   # force exact matches
@@ -113,7 +113,7 @@ get_var <- function(iter,
     if (is.data.frame(iter)) {
       iter <- tibble::as_tibble(iter)
     } else {
-      stop ("iter must be a tibble", .call = FALSE)
+      stop("iter must be a tibble", .call = FALSE)
     }
   }
 
@@ -157,6 +157,7 @@ get_var_clin <- function(var,
                           )) {
   intersect(var, var_clin_possible)
 }
+
 #' @export
 #'
 #' @param
