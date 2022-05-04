@@ -1,3 +1,60 @@
+fortify_vars <- function(iter, regex = "var_*", cn = NULL, default_ds = "data_raw") {
+  if (!is.null(regex)) {
+    cn <- c(
+      cn,
+      colnames(iter)[grepl(regex, colnames(iter))]
+    )
+  }
+  cn <- unique(cn)
+  if (length(cn) == 0) {
+    return(iter)
+  }
+
+  for (.cn in cn) {
+    iter[[.cn]] <- .fortify_var(
+      elem = iter[[.cn]],
+      default_ds = default_ds
+    )
+  }
+  iter
+}
+.fortify_var <- function(elem, default_ds) {
+  if (is.null(elem)) return(elem)
+  if (identical(list(NULL), elem)) return(elem)
+  if (!is.list(elem) && is.vector(elem)) {
+    elem_out <- lapply(elem, function(x) {
+      list(
+        cn = x,
+        nm = x,
+        ds = default_ds,
+        trans = NULL,
+        spline = NULL
+      )
+    })
+  } else if (is.list(elem)) {
+    if (any(vapply(elem, Negate(is.list), FUN.VALUE = logical(1)))) {
+      stop(
+        "Variables must be specified as a list of lists",
+        call. = FALSE
+      )
+    }
+    elem_out <- lapply(elem, function(x) {
+      if (!("nm" %in% names(x) || "cn" %in% names(x))) {
+        stop("Either cn or nm must be supplied")
+      }
+      if (!"nm" %in% names(x)) x[["nm"]] <- setNames(unlist(x[["cn"]]), NULL)
+      if (!"cn" %in% names(x)) x[["cn"]] <- setNames(unlist(x[["nm"]]), NULL)
+      if (!"ds" %in% names(x)) x[["ds"]] <- default_ds
+      if (!"trans" %in% names(x)) x <- append(x, list("trans" = NULL))
+      if (!"spline" %in% names(x)) x <- append(x, list("spline" = NULL))
+      x[c("nm", "cn", "ds", "trans", "spline")]
+    })
+  } else {
+    stop("elem not either a list or a vector (or NULL)")
+  }
+  elem_out
+}
+
 #' @export
 filter_using_list <- function(.data, filter_list) {
   for (i in seq_along(filter_list)) {
