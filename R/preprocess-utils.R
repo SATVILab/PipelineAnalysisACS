@@ -522,44 +522,63 @@ remove_tc_assay_from_exp_s <- function(p_dots) {
   p_dots
 }
 
-winsorise <- function(data_raw, wins, p_dots, iter) {
+winsorise <- function(.data, wins, iter) {
+
   if (wins == "wins_n") {
-    return(data_raw)
+    return(.data)
   }
 
   wins_var <- stringr::str_sub(wins, start = 6)
-  wins_var_vec <- purrr::map_chr(seq_len(stringr::str_length(wins_var)), function(i) {
+  wins_var_vec <- purrr::map_chr(
+    seq_len(stringr::str_length(wins_var)), function(i) {
     stringr::str_sub(wins_var, i, i)
   })
   if ("y" %in% wins_var_vec) {
-    sd_var <- sd(data_raw$resp)
-    mad_var <- mad(data_raw$resp)
-    max_var <- max(
-      mean(data_raw$resp) + 2 * sd_var,
-      median(data_raw$resp) + 2 * mad_var
-    )
-    min_var <- min(
-      mean(data_raw$resp) - 2 * sd_var,
-      median(data_raw$resp) - 2 * mad_var
-    )
-    data_raw[, "resp"] <- pmax(pmin(data_raw$resp, max_var), min_var)
-  }
-  if ("x" %in% wins_var_vec) {
-    var_vec <- c(iter$var_exp, names(iter$var_exp_s))
-    for (var in var_vec) {
-      if (!is.numeric(data_raw[[var]])) next
-      sd_var <- sd(data_raw[[var]])
-      mad_var <- mad(data_raw[[var]])
-      max_var <- max(
-        mean(data_raw[[var]]) + 3 * sd_var,
-        median(data_raw[[var]]) + 3 * mad_var
-      )
-      min_var <- min(
-        mean(data_raw[[var]]) - 3 * sd_var,
-        median(data_raw[[var]]) - 3 * mad_var
-      )
-      data_raw[, var] <- pmax(pmin(data_raw[[var]], max_var), min_var)
+    var_vec_to_wins_y <- iter$var_dep
+    for (i in seq_along(var_vec_to_wins_y)) {
+      var <- var_vec_to_wins_y[[i]]
+      if (!is.numeric(.data[[var]])) next
+      num_vec <- .data[[var]]
+      all_integer <- ceiling(num_vec) == num_vec & floor(num_vec) == num_vec
+      if (!ind_list_null(iter$var_offset)) {
+        num_vec_offsetted <- num_vec / .data[[iter$var_offset]]
+        num_vec_wins <- .winsorise(x = num_vec_offsetted)
+        num_vec_out <- num_vec_wins * .data[[iter$var_offset]]
+      } else {
+        num_vec_out <- .winsorise(x = num_vec)
+      }
+      if (all_integer) {
+        num_vec_out <- round(num_vec_out)
+      }
+      .data[, var] <- num_vec_out
     }
   }
-  data_raw
+  if ("x" %in% wins_var_vec) {
+    var_vec_to_wins_x <- c(iter$var_exp, .get_list_nm(iter$var_exp_spline))
+    var_vec_to_wins_x <- .rm_list_null(var_vec_to_wins_x)
+    for (i in seq_along(var_vec_to_wins_x)) {
+      var <- var_vec_to_wins_x[[i]]
+      if (!is.numeric(.data[[var]])) next
+      num_vec <- .data[[var]]
+      num_vec_out <- .winsorise(x = num_vec)
+      .data[, var] <- num_vec_out
+    }
+  }
+  .data
+}
+
+
+
+.winsorise <- function(x, mult = 3) {
+  sd_var <- sd(x)
+  mad_var <- mad(x)
+  max_var <- max(
+    mean(x) + mult * sd_var,
+    median(x) + mult * mad_var
+  )
+  min_var <- min(
+    mean(x) - mult * sd_var,
+    median(x) - mult * mad_var
+  )
+  pmax(pmin(x, max_var), min_var)
 }
