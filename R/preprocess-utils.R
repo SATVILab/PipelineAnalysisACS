@@ -1,12 +1,10 @@
-
-#' @title Put variables into correct format
-#' 
-#' @export
-fortify_vars <- function(iter, regex = "var_*", cn = NULL, default_ds = "data_raw") {
+fortify_vars <- function(iter,
+                         regex = "var_*",
+                         cn = NULL,
+                         default_ds = "data_raw") {
   stopifnot(is.list(iter))
   if (!is.null(regex)) {
-    iter_nm_vec <- switch(
-      as.character(is.data.frame(iter)),
+    iter_nm_vec <- switch(as.character(is.data.frame(iter)),
       "TRUE" = colnames(iter),
       "FALSE" = names(iter)
     )
@@ -21,6 +19,7 @@ fortify_vars <- function(iter, regex = "var_*", cn = NULL, default_ds = "data_ra
   }
 
   for (.cn in cn) {
+    print(.cn)
     iter[[.cn]] <- .fortify_var(
       elem = iter[[.cn]],
       default_ds = default_ds
@@ -28,14 +27,16 @@ fortify_vars <- function(iter, regex = "var_*", cn = NULL, default_ds = "data_ra
   }
   iter
 }
+
 .fortify_var <- function(elem, default_ds) {
   if (is.null(elem)) return(list(NULL))
   if (identical(list(NULL), elem)) return(elem)
   if (!is.list(elem) && is.vector(elem)) {
     elem_out <- lapply(elem, function(x) {
       list(
-        cn = x,
         nm = x,
+        cn_orig = x,
+        cn_new = x,
         ds = default_ds,
         trans = NULL,
         spline = NULL
@@ -49,21 +50,40 @@ fortify_vars <- function(iter, regex = "var_*", cn = NULL, default_ds = "data_ra
       )
     }
     elem_out <- lapply(elem, function(x) {
-      if (!("nm" %in% names(x) || "cn" %in% names(x))) {
-        stop("Either cn or nm must be supplied")
+      if (!("cn_orig" %in% names(x))) {
+        stop("cn_orig not supplied")
       }
-      if (!"nm" %in% names(x)) x[["nm"]] <- setNames(unlist(x[["cn"]]), NULL)
-      if (!"cn" %in% names(x)) x[["cn"]] <- setNames(unlist(x[["nm"]]), NULL)
+      if (!"nm" %in% names(x)) {
+        x[["nm"]] <- setNames(unlist(x[["cn_orig"]]), NULL)
+      }
+      if (!"cn_new" %in% names(x)) {
+        x[["cn_new"]] <- setNames(unlist(x[["cn_orig"]]), NULL)
+      }
       if (!"ds" %in% names(x)) x[["ds"]] <- default_ds
       if (!"trans" %in% names(x)) x <- append(x, list("trans" = NULL))
       if (!"spline" %in% names(x)) x <- append(x, list("spline" = NULL))
-      x[c("nm", "cn", "ds", "trans", "spline")]
+      if (!is.null(x[["spline"]])) {
+        stopifnot("fn" %in% names(x$spline))
+        if ("args" %in% names(x$spline)) stopifnot(is.list(x$spline$args))
+        extra_elems <- setdiff(names(x$spline), c("pkg", "fn", "args"))
+        if (length(extra_elems) > 0) {
+          stop(
+            paste0(
+              "The following are extra arguments to spline: ",
+              paste0(extra_elems, collapse = "; ")
+            )
+          )
+        }
+      }
+      if (!is.null(x$trans)) stopifnot(is.function(x$trans))
+      x[c("nm", "cn_orig", "cn_new", "ds", "trans", "spline")]
     })
   } else {
     stop("elem not either a list or a vector (or NULL)")
   }
   elem_out
 }
+
 #' @export
 filter_using_list <- function(.data, filter_list) {
   for (i in seq_along(filter_list)) {
