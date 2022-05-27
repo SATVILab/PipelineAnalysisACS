@@ -1173,7 +1173,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       n_cell = n_cell_stim,
       resp = count_bs
     ) %>%
-    dplyr::rename(freq_bs = prop_bs) %>%
+    dplyr::mutate(freq_bs = prop_bs * 1e2) %>%
     dplyr::select(-c(
       count_stim, count_uns,
       n_cell_uns, prop_stim,
