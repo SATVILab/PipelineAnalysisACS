@@ -16,15 +16,12 @@ LazyData: true
 Config/testthat/edition: 3
 Imports: 
     magrittr,
-    glmmTMB,
-    lme4,
     cowplot,
     purrr,
     tidyr,
     stringr,
     dplyr,
     ggplot2,
-    effects,
     pander,
     UtilsGGSV (>= 0.1.0),
     UtilsCytoRSV (>= 0.1.1.9000)
