@@ -1153,7 +1153,8 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     dplyr::filter(cyt_combn %in% combn_vec_sel)
 }
 
-.subtract_background <- function(.data) {
+#' @export
+subtract_background <- function(.data) {
   .data %>%
     UtilsCytoRSV::calc_prop(
       den = "n_cell_stim",
