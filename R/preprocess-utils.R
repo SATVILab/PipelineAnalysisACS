@@ -94,6 +94,37 @@ filter_using_list <- function(.data, filter_list) {
   .data
 }
 
+get_tfmttb <- function(.data, ttb_max, ttb_min) {
+
+  if (missing(ttb_max)) stop("ttb_max must be specified")
+  if (missing(ttb_min)) stop("ttb_min must be specified")
+
+  if (!is.null(ttb_min)) {
+    .data <- .data %>%
+      dplyr::mutate(
+        timeToTBFromVisit = pmax(.data$timeToTBFromVisit, ttb_min)
+      )
+  }
+
+  ttb_max <- ifelse(
+    is.null(ttb_max) || is.na(ttb_max),
+    max(.data$timeToTBFromVisit,na.rm = TRUE),
+    ttb_max
+  )
+
+  .data %>%
+    dplyr::mutate(
+      tfmttb = ifelse(Progressor == "no", # make zero non-progressor
+        0,
+        -9999
+      ),
+      tfmttb = ifelse(.data$Progressor == "yes",
+        pmax(0, ttb_max - .data$timeToTBFromVisit),
+        .data$tfmttb
+      )
+    )
+}
+
 trans <- function(.data, trans) {
   if (is.null(trans)) {
     return(.data)
