@@ -26,7 +26,7 @@ Imports:
     ggplot2,
     effects,
     pander,
-    UtilsGGMR (>= 0.1.0)
+    UtilsGGSV (>= 0.1.0)
 Suggests: 
     pipeline,
     DataTidyACSCyTOFFAUST,
@@ -35,6 +35,6 @@ Suggests:
     DataTidyACSAntibody,
     testthat (>= 3.0.0),
     gitcreds
-RoxygenNote: 7.1.2
-Remotes:  
-    SATVILab/UtilsGGMR
+RoxygenNote: 7.2.1
+Remotes: 
+    SATVILab/UtilsGGSV

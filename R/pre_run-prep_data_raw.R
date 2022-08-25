@@ -1384,8 +1384,6 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   data_raw <- data_raw_summed %>%
     dplyr::bind_rows(data_raw)
 
-
-
   # calculate frequencies
   # ---------------------
 
