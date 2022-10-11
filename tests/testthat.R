@@ -1,4 +1,4 @@
 library(testthat)
-library(AnalysisPipelineACS)
+library(PipelineAnalysisACS)
 
-test_check("AnalysisPipelineACS")
+test_check("PipelineAnalysisACS")
