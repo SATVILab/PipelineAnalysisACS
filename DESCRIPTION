@@ -29,6 +29,7 @@ Imports:
     UtilsGGSV (>= 0.1.0)
 Suggests: 
     pipeline,
+    modutils,
     DataTidyACSCyTOFFAUST,
     DataTidyACSCyTOFCytokinesTCells,
     DataTidyACSCyTOFCytokinesNKBCells,
