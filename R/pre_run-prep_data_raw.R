@@ -77,10 +77,10 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
                 dplyr::filter(den == "all") %>%
                 dplyr::select(
                   SubjectID, VisitType, stim, n_cell
-                  ) %>%
+                ) %>%
                 dplyr::group_by(
                   SubjectID, VisitType, stim
-                  ) %>%
+                ) %>%
                 dplyr::slice(1) %>%
                 dplyr::ungroup(),
               by = c("SubjectID", "VisitType", "stim")
@@ -114,31 +114,31 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         "cd4_th1_il17" = {
           if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
             remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-            }
+          }
           DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$flowsom
         },
         "cd8_th1" = {
           if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
             remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-            }
+          }
           DataTidyACSCyTOFCytokinesTCells::cd8_th1$flowsom
         },
         "tcrgd_th1" = {
           if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
             remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-            }
+          }
           DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$flowsom
         },
         "nk_ifng_tnf_il22" = {
           if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
             remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
-            }
+          }
           DataTidyACSCyTOFCytokinesNKBCells::nk_ifng_tnf_il22$flowsom
         },
         "bcell_ifng_il6" = {
           if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
             remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
-            }
+          }
           DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$flowsom
         }
       )
@@ -148,8 +148,8 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         "cd4_th1_il17" = "exc-Nd146Di",
         "cd8_th1" = "exc-Nd146Di",
         "tcrgd_th1" = "exc-Nd146Di",
-        "nk_ifng_tnf_il22"  = "exc-none",
-        "bcell_ifng_il6"  = "exc-none"
+        "nk_ifng_tnf_il22" = "exc-none",
+        "bcell_ifng_il6" = "exc-none"
       )
 
       # remove all_u- from stim
@@ -205,31 +205,31 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         "cd4_th1_il17" = {
           if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
             remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-            }
+          }
           DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$stats_combn_tbl
         },
         "cd8_th1" = {
           if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
             remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-            }
+          }
           DataTidyACSCyTOFCytokinesTCells::cd8_th1$stats_combn_tbl
         },
         "tcrgd_th1" = {
           if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
             remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-            }
+          }
           DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl
         },
         "nk_ifng_tnf_il22" = {
           if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
             remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
-            }
+          }
           DataTidyACSCyTOFCytokinesNKBCells::nk_ifng_tnf_il22$stats_combn_tbl
         },
         "bcell_ifng_il6" = {
           if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
             remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
-            }
+          }
           DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$stats_combn_tbl
         }
       )
@@ -374,8 +374,8 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     "outer" = {
       if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
         remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-        }
-      
+      }
+
       data_raw <- DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$hladr
 
       data_raw <- data_raw %>%
@@ -454,8 +454,6 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   data_raw <- DataTidyACSCyTOFFAUST::faust_data_tidy %>%
     dplyr::filter(stim %in% c("mtb", "p1")) %>%
     dplyr::filter(pop_main == "cd4")
-
-
 }
 
 .prep_dr_cytokines_freq <- function(iter,
@@ -464,40 +462,39 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
                                     data_raw) {
   switch(stage,
     "outer" = {
-
-        data_raw <- switch(iter$ds,
-          "cd4_th1_il17" = {
-            if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
-              remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-              }
-            DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$stats_combn_tbl
-          },
-          "cd8_th1" = {
-            if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
-              remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-              }
-            DataTidyACSCyTOFCytokinesTCells::cd8_th1$stats_combn_tbl
-          },
-          "tcrgd_th1" = {
-            if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
-              remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-              }
-            DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl
-          },
-          "nk_ifng_tnf_il22" = {
-            if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
-              remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
-              }
-            DataTidyACSCyTOFCytokinesNKBCells::nk_ifng_tnf_il22$stats_combn_tbl
-          },
-          "bcell_ifng_il6" = {
-            if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
-              remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
-              }
-            DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$stats_combn_tbl
-          },
-          "cd4_eff_mem" = .prep_cd4_eff_mem()
-        )
+      data_raw <- switch(iter$ds,
+        "cd4_th1_il17" = {
+          if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
+            remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
+          }
+          DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$stats_combn_tbl
+        },
+        "cd8_th1" = {
+          if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
+            remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
+          }
+          DataTidyACSCyTOFCytokinesTCells::cd8_th1$stats_combn_tbl
+        },
+        "tcrgd_th1" = {
+          if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
+            remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
+          }
+          DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$stats_combn_tbl
+        },
+        "nk_ifng_tnf_il22" = {
+          if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
+            remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
+          }
+          DataTidyACSCyTOFCytokinesNKBCells::nk_ifng_tnf_il22$stats_combn_tbl
+        },
+        "bcell_ifng_il6" = {
+          if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
+            remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
+          }
+          DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$stats_combn_tbl
+        },
+        "cd4_eff_mem" = .prep_cd4_eff_mem()
+      )
 
       if (iter$ds == "cd4_eff_mem") {
         return(data_raw)
@@ -584,7 +581,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
                 remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
               }
               DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass
-              },
+            },
             "cd8_th1" = {
               if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
                 remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
@@ -636,7 +633,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
                 remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
               }
               DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass
-              },
+            },
             "cd8_th1" = {
               if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
                 remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
@@ -729,7 +726,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
               }
               DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$post_probs_bulk %>%
                 magrittr::extract2("exc-Nd146Di")
-            }     
+            }
           ) %>%
             magrittr::extract2("locb0.15_min_clust") %>%
             magrittr::extract2(iter$stim)
@@ -1197,10 +1194,10 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         return(data_raw)
       }
       switch(iter$var_dep,
-        "risk6" = TuberculomicsCompendium::signature_6gene %>%
+        "risk6" = DataTidyACSRISK6::data_tidy_risk6 %>%
           tibble::as_tibble() %>%
           dplyr::rename(resp = sig6gene_CorScore),
-        TuberculomicsCompendium::soma_data_tidy %>%
+        DataTidyACSSoma::data_tidy_acs_soma %>%
           dplyr::mutate(
             Soma_Target = gsub("\\W", "", Soma_Target)
           ) %>%
@@ -1259,7 +1256,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     "bcell" = {
       if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
         remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
-        }
+      }
       DataTidyACSCyTOFCytokinesNKBCells::data_tidy_faust_cyt
     },
     "cd4" = , # nolint
@@ -1267,7 +1264,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     "tcrgd" = {
       if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
         remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-        }
+      }
       DataTidyACSCyTOFCytokinesTCells::data_tidy_faust_cyt
     },
     stop("pop not recognised")
@@ -1418,20 +1415,20 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     filter_tbl_fdr <- data_raw %>%
       dplyr::group_by(pop, pheno, stim, combn) %>%
       dplyr::summarise(
-        p = switch(
-          as.character(
-            quantile(
-              .data$freq_stim,
-              0.75, na.rm = TRUE
-            ) == 0
-            ),
-          "TRUE" = 1,
-          wilcox.test(
-            x = .data$freq_stim,
-            y = .data$freq_uns,
-            paired = TRUE,
-            alternative = "greater"
-          )$p.value
+        p = switch(as.character(
+          quantile(
+            .data$freq_stim,
+            0.75,
+            na.rm = TRUE
+          ) == 0
+        ),
+        "TRUE" = 1,
+        wilcox.test(
+          x = .data$freq_stim,
+          y = .data$freq_uns,
+          paired = TRUE,
+          alternative = "greater"
+        )$p.value
         ),
         .groups = "drop"
       ) %>%

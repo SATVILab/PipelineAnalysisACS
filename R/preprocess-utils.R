@@ -120,7 +120,7 @@ add_clinical_data_and_filter <- function(.data,
     setdiff("n_cell")
   cols_add <- unique(cols_add)
   cols_join <- unique(cols_join)
-  clinical_data_add <- TuberculomicsCompendium::clinical_data
+  clinical_data_add <- DataTidyACSClinical::data_tidy_clinical
   clinical_data_add <- clinical_data_add[, colnames(clinical_data_add) %in%
     c(cols_join, cols_add)]
   clinical_data_add <- clinical_data_add %>%
@@ -267,7 +267,7 @@ add_tc_assay_data <- function(.data,
                                     cols_add,
                                     cols_join,
                                     ...) {
-  var_tbl_add <- TuberculomicsCompendium::soma_data_tidy %>%
+  var_tbl_add <- DataTidyACSSoma::data_tidy_soma %>%
     dplyr::mutate(
       # prevents failures when fitting formula later
       Soma_Target = gsub("\\W", "", Soma_Target)
@@ -309,7 +309,7 @@ add_tc_assay_data <- function(.data,
                                      ...) {
   .data <- .data %>%
     dplyr::inner_join(
-      TuberculomicsCompendium::signature_6gene,
+      DataTidyACSRISK6::data_tidy_risk6,
       by = cols_join
     ) %>%
     dplyr::rename(risk6 = sig6gene_CorScore)
