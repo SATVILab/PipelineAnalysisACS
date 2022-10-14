@@ -42,7 +42,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       if (!requireNamespace("DataTidyACSCyTOFFAUST", quietly = TRUE)) {
         remotes::install_github("SATVILab/DataTidyACSCyTOFFAUST")
       }
-      data_raw <- DataTidyACSCyTOFFAUST::faust_data_tidy %>%
+      data_raw <- DataTidyACSCyTOFFAUST::data_tidy_faust %>%
         dplyr::rename(
           resp = count,
           pop_sub_faust = pop
@@ -451,7 +451,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   if (!requireNamespace("DataTidyACSCyTOFFAUST", quietly = TRUE)) {
     remotes::install_github("SATVILab/DataTidyACSCyTOFFAUST")
   }
-  data_raw <- DataTidyACSCyTOFFAUST::faust_data_tidy %>%
+  data_raw <- DataTidyACSCyTOFFAUST::data_tidy_faust %>%
     dplyr::filter(stim %in% c("mtb", "p1")) %>%
     dplyr::filter(pop_main == "cd4")
 }
@@ -517,7 +517,6 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       # calculate background-subtracted frequencies, if need be
       data_raw <- data_raw %>%
         .subtract_background()
-
 
       # convert cyt combn from COMPASS format
       data_raw$cyt_combn <- compassutils::convert_cyt_combn_format(
