@@ -382,21 +382,40 @@ winsorise <- function(data_raw, wins, p_dots, iter) {
   }
 
   wins_var <- stringr::str_sub(wins, start = 6)
-  wins_var_vec <- purrr::map_chr(seq_len(stringr::str_length(wins_var)), function(i) {
-    stringr::str_sub(wins_var, i, i)
-  })
+  wins_var_vec <- purrr::map_chr(
+    seq_len(stringr::str_length(wins_var)),
+    function(i) {
+      stringr::str_sub(wins_var, i, i)
+    }
+  )
   if ("y" %in% wins_var_vec) {
-    sd_var <- sd(data_raw$resp)
-    mad_var <- mad(data_raw$resp)
+    if (iter$var_offset == "none") {
+      resp_vec <- data_raw[["resp"]]
+    } else if (iter$var_offset == "n_cell") {
+      resp_vec <- data_raw[["resp"]] / data_raw[["n_cell"]]
+    } else if (iter$var_offset != "none") {
+      stop(paste0(
+        "value for var_offset of ",
+        iter$var_offset,
+        " not recognised"
+      ))
+    }
+    sd_var <- sd(resp_vec)
+    mad_var <- mad(resp_vec)
     max_var <- max(
-      mean(data_raw$resp) + 2 * sd_var,
-      median(data_raw$resp) + 2 * mad_var
+      mean(resp_vec) + 3 * sd_var,
+      median(resp_vec) + 3 * mad_var
     )
     min_var <- min(
-      mean(data_raw$resp) - 2 * sd_var,
-      median(data_raw$resp) - 2 * mad_var
+      mean(resp_vec) - 3 * sd_var,
+      median(resp_vec) - 3 * mad_var
     )
-    data_raw[, "resp"] <- pmax(pmin(data_raw$resp, max_var), min_var)
+    if (iter$var_offset == "none") {
+      data_raw[, "resp"] <- pmax(pmin(resp_vec, max_var), min_var)
+    } else if (iter$var_offset == "n_cell") {
+      data_raw[, "resp"] <- pmax(pmin(resp_vec, max_var), min_var) *
+        data_raw[["n_cell"]]
+    }
   }
   if ("x" %in% wins_var_vec) {
     var_vec <- c(iter$var_exp, names(iter$var_exp_s))
