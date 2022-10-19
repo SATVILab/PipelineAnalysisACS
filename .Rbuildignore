@@ -2,3 +2,6 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^SCRATCH\.R$
+^p\.png$
+^p_wins\.png$
+^Rplots\.pdf$

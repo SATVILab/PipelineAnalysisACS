@@ -420,16 +420,8 @@ winsorise <- function(data_raw, wins, p_dots, iter) {
     var_vec <- c(iter$var_exp, names(iter$var_exp_s))
     for (var in var_vec) {
       if (!is.numeric(data_raw[[var]])) next
-      sd_var <- sd(data_raw[[var]])
-      mad_var <- mad(data_raw[[var]])
-      max_var <- max(
-        mean(data_raw[[var]]) + 3 * sd_var,
-        median(data_raw[[var]]) + 3 * mad_var
-      )
-      min_var <- min(
-        mean(data_raw[[var]]) - 3 * sd_var,
-        median(data_raw[[var]]) - 3 * mad_var
-      )
+      max_var <- quantile(data_raw[[var]], 0.0975)
+      min_var <- quantile(data_raw[[var]], 0.025)
       data_raw[, var] <- pmax(pmin(data_raw[[var]], max_var), min_var)
     }
   }
