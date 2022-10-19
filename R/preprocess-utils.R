@@ -311,8 +311,7 @@ add_tc_assay_data <- function(.data,
     dplyr::inner_join(
       DataTidyACSRISK6::data_tidy_risk6,
       by = cols_join
-    ) %>%
-    dplyr::rename(risk6 = sig6gene_CorScore)
+    )
   .data[, c(cols_join, setdiff(colnames(.data), cols_join))]
 }
 

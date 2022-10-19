@@ -1195,7 +1195,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       switch(iter$var_dep,
         "risk6" = DataTidyACSRISK6::data_tidy_risk6 %>%
           tibble::as_tibble() %>%
-          dplyr::rename(resp = sig6gene_CorScore),
+          dplyr::rename(resp = risk6),
         DataTidyACSSoma::data_tidy_acs_soma %>%
           dplyr::mutate(
             Soma_Target = gsub("\\W", "", Soma_Target)
