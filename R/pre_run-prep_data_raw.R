@@ -258,12 +258,12 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       # calculating freq_stim and freq_uns,
       # as in the per-cluster freq_stim and freq_stim
       data_raw <- data_raw %>%
-        cytoutils::calc_freq(
+        UtilsCytoRSV::calc_freq(
           num = "count_stim",
           den = "n_cell_tot_stim",
           nm = "freq_tot_clust_stim"
         ) %>%
-        cytoutils::calc_freq(
+        UtilsCytoRSV::calc_freq(
           num = "count_uns",
           den = "n_cell_tot_uns",
           nm = "freq_tot_clust_uns"
@@ -531,7 +531,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       # sum over markers
       data_raw <- switch(iter$cyt_response_type,
         "summed" = data_raw %>%
-          cytoutils::sum_over_markers(
+          UtilsCytoRSV::sum_over_markers(
             grp = c(
               "SubjectID", "VisitType",
               "stim", "n_cell"
@@ -550,7 +550,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           marker_vec <- marker_vec[-which(marker_vec == "")]
           purrr::map_df(marker_vec, function(mk) {
             data_raw %>%
-              cytoutils::sum_over_markers(
+              UtilsCytoRSV::sum_over_markers(
                 grp = c(
                   "SubjectID", "VisitType",
                   "stim", "n_cell"
@@ -793,7 +793,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       "combn_prop" = {
         combn_comp <- paste0(
           "^",
-          paste0(cytoutils:::add_double_backslash(
+          paste0(UtilsCytoRSV:::add_double_backslash(
             iter$cyt_response_type_grp
           )),
           "$"
@@ -955,7 +955,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       "combn_prob" = {
         combn_comp <- paste0(
           "^",
-          paste0(cytoutils:::add_double_backslash(
+          paste0(UtilsCytoRSV:::add_double_backslash(
             iter$cyt_response_type_grp
           )),
           "$"
@@ -1151,12 +1151,12 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 
 .subtract_background <- function(.data) {
   .data %>%
-    cytoutils::calc_prop(
+    UtilsCytoRSV::calc_prop(
       den = "n_cell_stim",
       num = "count_stim",
       nm = "prop_stim"
     ) %>%
-    cytoutils::calc_prop(
+    UtilsCytoRSV::calc_prop(
       den = "n_cell_uns",
       num = "count_uns",
       nm = "prop_uns"
@@ -1286,7 +1286,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   # calculate summed response
   # -----------------------
 
-  data_raw_summed <- cytoutils::sum_over_markers(
+  data_raw_summed <- UtilsCytoRSV::sum_over_markers(
     .data = data_raw,
     grp = c(
       "SubjectID", "VisitType", "stim", "pop", "pheno",
@@ -1308,7 +1308,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   # calculate summed response
   # -----------------------
 
-  data_raw_summed <- cytoutils::sum_over_markers(
+  data_raw_summed <- UtilsCytoRSV::sum_over_markers(
     .data = data_raw,
     grp = c(
       "SubjectID", "VisitType", "stim", "pop", "pheno",
@@ -1330,7 +1330,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 
   # calculate memory and effector responses
   # ----------------------------------------
-  cytoutils::sum_over_markers(
+  UtilsCytoRSV::sum_over_markers(
     .data = data_raw,
     grp = c(
       "SubjectID", "VisitType", "stim", "pop", "pheno",
@@ -1349,7 +1349,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   # sum over cytokine combinations, if required
   # -----------------------
   data_raw <- switch(iter$pop,
-    "nk" = cytoutils::sum_over_markers(
+    "nk" = UtilsCytoRSV::sum_over_markers(
       .data = data_raw,
       grp = c(
         "SubjectID", "VisitType", "stim", "pop", "pheno",
@@ -1360,7 +1360,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       cmbn = "combn",
       resp = c("count", "count_uns")
     ),
-    "bcell" = cytoutils::sum_over_markers(
+    "bcell" = UtilsCytoRSV::sum_over_markers(
       .data = data_raw,
       grp = c(
         "SubjectID", "VisitType", "stim", "pop", "pheno",
@@ -1391,12 +1391,12 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   )
 
   data_raw <- data_raw %>%
-    cytoutils::calc_freq(
+    UtilsCytoRSV::calc_freq(
       den = den,
       num = "count",
       nm = "freq_stim"
     ) %>%
-    cytoutils::calc_freq(
+    UtilsCytoRSV::calc_freq(
       den = paste0(den, "_uns"),
       num = "count_uns",
       nm = "freq_uns"

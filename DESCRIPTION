@@ -25,9 +25,10 @@ Imports:
     dplyr,
     ggplot2,
     effects,
-    pander,
-    UtilsGGSV (>= 0.1.0)
+    pander
 Suggests: 
+    UtilsGGSV (>= 0.1.0),
+    UtilsCytoRSV,
     pipeline,
     modutils,
     DataTidyACSCyTOFFAUST,
@@ -37,5 +38,3 @@ Suggests:
     testthat (>= 3.0.0),
     gitcreds
 RoxygenNote: 7.2.1
-Remotes: 
-    SATVILab/UtilsGGSV
