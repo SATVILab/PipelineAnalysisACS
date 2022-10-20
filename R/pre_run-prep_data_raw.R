@@ -519,7 +519,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         .subtract_background()
 
       # convert cyt combn from COMPASS format
-      data_raw$cyt_combn <- compassutils::convert_cyt_combn_format(
+      data_raw$cyt_combn <- UtilsCytoRSV::convert_cyt_combn_format(
         cyt_combn = data_raw$cyt_combn,
         to = "std"
       )
