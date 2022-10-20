@@ -1196,7 +1196,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         "risk6" = DataTidyACSRISK6::data_tidy_risk6 %>%
           tibble::as_tibble() %>%
           dplyr::rename(resp = risk6),
-        DataTidyACSSoma::data_tidy_acs_soma %>%
+        DataTidyACSSoma::data_tidy_soma %>%
           dplyr::mutate(
             Soma_Target = gsub("\\W", "", Soma_Target)
           ) %>%
