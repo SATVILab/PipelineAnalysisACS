@@ -519,7 +519,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         .subtract_background()
 
       # convert cyt combn from COMPASS format
-      data_raw$cyt_combn <- UtilsCytoRSV::convert_cyt_combn_format(
+      data_raw$cyt_combn <- UtilsCompassSV::convert_cyt_combn_format(
         cyt_combn = data_raw$cyt_combn,
         to = "std"
       )
@@ -888,7 +888,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         dplyr::select(SampleID, everything())
 
       colnames(data_raw)[-1] <-
-        compassutils::convert_cyt_combn_format(
+        UtilsCompassSV::convert_cyt_combn_format(
           colnames(data_raw)[-1],
           to = "std"
         )
@@ -1076,7 +1076,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     dplyr::select(SampleID, everything())
 
   colnames(compass_tbl_prob)[-1] <-
-    compassutils::convert_cyt_combn_format(
+    UtilsCompassSV::convert_cyt_combn_format(
       colnames(compass_tbl_prob)[-1],
       to = "std"
     )
@@ -1109,7 +1109,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     dplyr::select(SampleID, everything())
 
   colnames(compass_tbl_prob)[-1] <-
-    compassutils::convert_cyt_combn_format(
+    UtilsCompassSV::convert_cyt_combn_format(
       colnames(compass_tbl_prob)[-1],
       to = "std"
     )
