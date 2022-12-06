@@ -7,31 +7,31 @@
 get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
 
   # cross factors
-  iter_tbl <- iter_list %>%
+  iter_tbl <- iter_list |>
     cross_df_safe()
 
   # have only one ttb_max
   # level for non-tfmttb models
   # and set it equal to "-"
   # ------------------
-  iter_tbl <- iter_tbl %>%
+  iter_tbl <- iter_tbl |>
     dplyr::mutate(
       is_ttb_model = grepl("tfmttb", names(var_exp_spline))
     )
 
   # make ttb_max only have one value if it's not tfmttb as the
   # explanatory variable
-  non_ttb_cn_vec <- colnames(iter_tbl) %>%
+  non_ttb_cn_vec <- colnames(iter_tbl) |>
     setdiff(c("ttb_max"))
 
-  iter_tbl <- iter_tbl %>%
-    dplyr::filter(!is_ttb_model) %>%
-    dplyr::group_by_at(non_ttb_cn_vec) %>%
-    dplyr::slice(1) %>%
-    dplyr::mutate(ttb_max = NA_real_) %>%
-    dplyr::ungroup() %>%
+  iter_tbl <- iter_tbl |>
+    dplyr::filter(!is_ttb_model) |>
+    dplyr::group_by_at(non_ttb_cn_vec) |>
+    dplyr::slice(1) |>
+    dplyr::mutate(ttb_max = NA_real_) |>
+    dplyr::ungroup() |>
     dplyr::bind_rows(
-      iter_tbl %>%
+      iter_tbl |>
         dplyr::filter(is_ttb_model)
     )
 
@@ -40,7 +40,7 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
 
   if ("var_int" %in% names(iter_list)) {
     # remove it for tfmttb and prog model
-    iter_tbl <- iter_tbl %>%
+    iter_tbl <- iter_tbl |>
       dplyr::filter(!(is_ttb_model & var_int))
 
     # set it equal to var_exp and names of var_exp_spline
@@ -56,13 +56,13 @@ get_iter_tbl <- function(iter_list, remove_non_tfmttb_int_n = TRUE) {
     })
 
     # add it to tbl
-    iter_tbl <- iter_tbl %>%
+    iter_tbl <- iter_tbl |>
       dplyr::mutate(var_int = var_int_list)
 
     # force interaction terms-only
     # when exp_s is not tfmttb
     if (remove_non_tfmttb_int_n) {
-      iter_tbl <- iter_tbl %>%
+      iter_tbl <- iter_tbl |>
         dplyr::filter(!(purrr::map_lgl(var_int, is.null) &
           !is_ttb_model))
     }
@@ -90,8 +90,8 @@ set_boundary_knots <- function(iter_tbl) {
   two_inner_knots_vec_lgl <- purrr::map_lgl(
     ttb_model_vec_ind,
     function(i) {
-      iter_tbl$var_exp_spline[[i]]$tfmttb$params$knots %>%
-        length() %>%
+      iter_tbl$var_exp_spline[[i]]$tfmttb$params$knots |>
+        length() |>
         magrittr::equals(2)
     }
   )
@@ -99,7 +99,7 @@ set_boundary_knots <- function(iter_tbl) {
     return(iter_tbl)
   }
   set_bk_vec_ind <- ttb_model_vec_ind[two_inner_knots_vec_lgl]
-  var_exp_spline_list <- iter_tbl %>%
+  var_exp_spline_list <- iter_tbl |>
     dplyr::pull(var_exp_spline)
   for (i in set_bk_vec_ind) {
     if (iter_tbl$ttb_max[i] == 630) {
@@ -108,7 +108,7 @@ set_boundary_knots <- function(iter_tbl) {
       var_exp_spline_list[[i]] <- rep_list
     }
   }
-  iter_tbl %>%
+  iter_tbl |>
     dplyr::mutate(var_exp_spline = var_exp_spline_list)
 }
 

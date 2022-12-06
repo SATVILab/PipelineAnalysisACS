@@ -28,15 +28,15 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj, iter) {
   }
   fml_as_chr_list <- modutils::get_mod_fml_as_chr(
     var_dep = "resp",
-    var_exp = iter[["var_exp"]] %>% unlist(),
+    var_exp = iter[["var_exp"]] |> unlist(),
     var_exp_spline = iter[["var_exp_spline"]],
-    var_re = iter[["var_re"]] %>% unlist(),
+    var_re = iter[["var_re"]] |> unlist(),
     var_offset = switch(as.character(is.null(iter[["var_offset"]])),
       "TRUE" = NULL,
       "FALSE" = paste0("log(", iter$var_offset, ")")
     ),
-    var_conf = iter[["var_conf"]] %>% unlist(),
-    var_int = iter[["var_int"]] %>% unlist(),
+    var_conf = iter[["var_conf"]] |> unlist(),
+    var_int = iter[["var_int"]] |> unlist(),
     rhs_text = NULL,
     int = TRUE,
     sub_exp = iter$sub_exp
@@ -94,9 +94,9 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj, iter) {
     family_arg,
     iter[["mod_args"]],
     "data = data_mod"
-  ) %>%
-    purrr::compact() %>%
-    unlist() %>%
+  ) |>
+    purrr::compact() |>
+    unlist() |>
     paste0(collapse = ", ")
 
   # fit full model
@@ -158,10 +158,10 @@ fit <- function(data_mod, data_raw, p_dots, dir_proj, iter) {
       return(NULL)
     }
     mod_fix
-  }) %>%
+  }) |>
     setNames(names(fml_as_chr_list)[non_full_fml_ind_vec])
 
-  mod_list <- list("full" = mod_full) %>%
+  mod_list <- list("full" = mod_full) |>
     append(mod_list_non_full)
 
   # ============================

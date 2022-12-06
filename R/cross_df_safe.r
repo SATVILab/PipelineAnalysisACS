@@ -92,7 +92,7 @@ cross_df_safe <- function(.l, .filter = NULL) {
 
   cross_list <- purrr::cross(.l, .filter)
 
-  cross_df <- cross_list %>%
+  cross_df <- cross_list |>
     purrr::map_df(.convert_to_tibble_row_one,
                   protect = cols_to_protect_vec)
 
@@ -103,13 +103,13 @@ cross_df_safe <- function(.l, .filter = NULL) {
     all_list_of_list <- purrr::map_lgl(
       cross_df[[ind]],
       is.list
-    ) %>%
+    ) |>
       all()
     all_unnamed <- is.null(names(cross_df[[ind]]))
     all_length_1 <- purrr::map_lgl(
       cross_df[[ind]],
       function(x) length(x) == 1
-    ) %>%
+    ) |>
       all()
 
     if (all_list_of_list && all_unnamed && all_length_1) {
@@ -137,7 +137,7 @@ get_cols_to_protect <- function(.l) {
 
       lg1 <- purrr::map_lgl(.l[[ind]], function(x) {
         length(x) > 1
-      }) %>%
+      }) |>
         any()
 
       if (any(lg1)) {
@@ -145,11 +145,11 @@ get_cols_to_protect <- function(.l) {
       }
       named <- purrr::map_lgl(.l[[ind]], function(x) {
         !is.null(names(x))
-      }) %>%
+      }) |>
         all()
       named
     }
-  ) %>%
+  ) |>
     which()
 }
 

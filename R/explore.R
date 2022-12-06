@@ -42,8 +42,8 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
   # data for plot
   # -------------------
 
-  data_plot <- data_mod # %>%
-  # left_join(data_raw %>%
+  data_plot <- data_mod # |>
+  # left_join(data_raw |>
   #           select(pop, fcs, resp_type, Progressor, SampleID,
   #                  timeToTBFromVisit, timeToTB),
   #       by = c("pop", "fcs", "resp_type", "Progressor", "SampleID"))
@@ -103,7 +103,7 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
 
   # create data for plotting box plots, getting
   # categories for boxplot grouping
-  data_plot_box <- data_plot %>%
+  data_plot_box <- data_plot |>
     mutate(
       `Time to TB` = ifelse(tfmttb != 0,
         paste0("< ", max_ttb, " days"),
@@ -203,12 +203,12 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
   # =============================
 
   # filter to only choose samples closer to TB
-  data_plot_long <- data_plot %>%
-    filter(Progressor == "yes") %>%
-    left_join(iter$clinical_data %>%
-      group_by(SampleID) %>%
-      slice(1) %>%
-      ungroup() %>%
+  data_plot_long <- data_plot |>
+    filter(Progressor == "yes") |>
+    left_join(iter$clinical_data |>
+      group_by(SampleID) |>
+      slice(1) |>
+      ungroup() |>
       select(timeToTBFromVisit, SubjectID, VisitType),
     by = c("SubjectID", "VisitType")
     )
@@ -300,12 +300,12 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
   # =============================
 
   # filter to only choose samples closer to TB
-  data_plot_long <- data_plot %>%
-    filter(Progressor == "no") %>%
-    left_join(iter$clinical_data %>%
-      group_by(SampleID) %>%
-      slice(1) %>%
-      ungroup() %>%
+  data_plot_long <- data_plot |>
+    filter(Progressor == "no") |>
+    left_join(iter$clinical_data |>
+      group_by(SampleID) |>
+      slice(1) |>
+      ungroup() |>
       select(timeToTBFromVisit, SubjectID, VisitType),
     by = c("SubjectID", "VisitType")
     )
@@ -417,7 +417,7 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
     # data for plot
     # -------------------
 
-    data_plot <- iter$stats_combn_tbl %>%
+    data_plot <- iter$stats_combn_tbl |>
       mutate(
         dataset = iter$dataset_name,
         cyt_response_type_grp = iter$cyt_response_type_grp_curr
@@ -456,12 +456,12 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
 
     data_plot %<>% mutate(cyt_combn = str_remove_all(cyt_combn, "~"))
     # data_plot %<>%
-    #  mutate(cyt_combn = str_replace(cyt_combn, "Ho165Di", "IFNg") %>%
-    #          str_replace("Nd146Di", "TNF") %>%
-    #          str_replace("Gd158Di", "IL2") %>%
-    #          str_replace("Dy164Di", "IL17") %>%
-    #          str_replace("Gd156Di", "IL6") %>%
-    #          str_replace("Nd150Di", "IL22") %>%
+    #  mutate(cyt_combn = str_replace(cyt_combn, "Ho165Di", "IFNg") |>
+    #          str_replace("Nd146Di", "TNF") |>
+    #          str_replace("Gd158Di", "IL2") |>
+    #          str_replace("Dy164Di", "IL17") |>
+    #          str_replace("Gd156Di", "IL6") |>
+    #          str_replace("Nd150Di", "IL22") |>
     #           str_remove_all("~"))
     # for(chnl in chnl_vec){
     #  if(chnl %in% names(data_plot)) data_plot <- data_plot[,-which(colnames(data_plot) == chnl)]
@@ -470,15 +470,15 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
     # Add clinical data info
     data_plot %<>%
       # mutate(SubjectID = str_sub(SampleID, end = 6),
-      #       VisitType = str_sub(SampleID, start = 8)) %>%
-      rename(n_cell = n_cell_stim) %>%
-      # mutate(fcs = str_remove(fcs, "-time_cut")) %>%
-      # left_join(cytof_fcs_to_clin_map %>%
-      #            mutate(fcs = stringr::str_remove(OrigFCSName, "-singlets_cleaned") %>%
+      #       VisitType = str_sub(SampleID, start = 8)) |>
+      rename(n_cell = n_cell_stim) |>
+      # mutate(fcs = str_remove(fcs, "-time_cut")) |>
+      # left_join(cytof_fcs_to_clin_map |>
+      #            mutate(fcs = stringr::str_remove(OrigFCSName, "-singlets_cleaned") |>
       #                     stringr::str_remove("-2.1GB_")),
-      #          by = 'fcs') %>%
-      select(SubjectID, VisitType, cyt_combn, n_cell, resp) %>%
-      left_join(clinical_data %>%
+      #          by = 'fcs') |>
+      select(SubjectID, VisitType, cyt_combn, n_cell, resp) |>
+      left_join(clinical_data |>
         select(SubjectID, Progressor, timeToTBFromVisit, VisitType),
       by = c("SubjectID", "VisitType")
       )
@@ -498,10 +498,10 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
       )
 
     data_plot %<>%
-      group_by(cyt_combn) %>%
-      mutate(n_high = sum(resp > 0.02)) %>%
-      filter(n_high / n() > 0.1) %>%
-      ungroup() %>%
+      group_by(cyt_combn) |>
+      mutate(n_high = sum(resp > 0.02)) |>
+      filter(n_high / n() > 0.1) |>
+      ungroup() |>
       select(-n_high)
 
     if (nrow(data_plot) > 1) {
@@ -512,7 +512,7 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
 
       # create data for plotting box plots, getting
       # categories for boxplot grouping
-      data_plot_box <- data_plot %>%
+      data_plot_box <- data_plot |>
         mutate(
           `Time to TB` = ifelse(tfmttb != 0,
             paste0("< ", max_ttb, " days"),
@@ -631,11 +631,11 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
   if (iter$response_type == "compass") {
     data_meta <- iter$compass_obj$data$meta
     # data_meta_orig <- data_meta
-    data_meta_add <- iter$clinical_data %>%
-      filter(SampleID %in% paste0(data_meta$SampleID)) %>%
-      group_by(SampleID) %>%
-      slice(1) %>%
-      ungroup() %>%
+    data_meta_add <- iter$clinical_data |>
+      filter(SampleID %in% paste0(data_meta$SampleID)) |>
+      group_by(SampleID) |>
+      slice(1) |>
+      ungroup() |>
       select(SubjectID, VisitType, Progressor, timeToTBFromVisit)
 
     data_meta_add %<>%
@@ -653,11 +653,11 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
         ttb_cat = ifelse(ttb >= 180 & ttb < 360, "180d - 360d", ttb_cat),
         ttb_cat = ifelse(ttb >= 360 & ttb < 540, "360d - 540d", ttb_cat),
         ttb_cat = ifelse(ttb >= 540, "540d - 720d", ttb_cat)
-      ) %>%
-      mutate(ttb_cat = ifelse(Progressor == "no", ">720d", ttb_cat)) %>%
-      mutate(prog = ifelse(Progressor == "yes", "Case", "Control")) %>%
-      mutate(prog_ttb_cat = paste0(prog, ": ", ttb_cat)) %>%
-      mutate(`Progressor: Time to TB` = prog_ttb_cat) %>%
+      ) |>
+      mutate(ttb_cat = ifelse(Progressor == "no", ">720d", ttb_cat)) |>
+      mutate(prog = ifelse(Progressor == "yes", "Case", "Control")) |>
+      mutate(prog_ttb_cat = paste0(prog, ": ", ttb_cat)) |>
+      mutate(`Progressor: Time to TB` = prog_ttb_cat) |>
       select(-Progressor)
 
     data_meta %<>%
@@ -687,7 +687,7 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
       labs(y = "RISK6 score")
 
     if (iter$assay %in% c("cytof", "cytof-faust", "cytof_flowsom") && iter$response_type == "count") {
-      data_plot_vs_resp <- data_mod %>% mutate(resp = resp / n_cell * 1e2)
+      data_plot_vs_resp <- data_mod |> mutate(resp = resp / n_cell * 1e2)
     } else {
       data_plot_vs_resp <- data_mod
     }
@@ -699,8 +699,8 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
       labs(x = "Response", y = "RISK6 score")
 
     p_long_prog <- ggplot(
-      data_mod %>%
-        filter(Progressor == "yes") %>%
+      data_mod |>
+        filter(Progressor == "yes") |>
         mutate(ttb = iter$max_ttb - tfmttb * ifelse(iter$scale, 1e2, 1)),
       aes(x = ttb, y = sig6gene_CorScore, col = Progressor)
     ) +
@@ -712,7 +712,7 @@ explore <- function(data_raw, data_mod, dir_proj, p_dots, iter) {
       scale_x_reverse()
 
     p_long_ctrl <- ggplot(
-      data_mod %>%
+      data_mod |>
         filter(Progressor == "no"),
       aes(x = DaysSinceEntry, y = sig6gene_CorScore, col = Progressor)
     ) +

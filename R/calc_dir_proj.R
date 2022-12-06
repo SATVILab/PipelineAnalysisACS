@@ -2,7 +2,7 @@
 #'
 #' @export
 calc_dir_proj <- function(dir_base, iter = list(), ...) {
-  d_list <- iter %>% append(list(...))
+  d_list <- iter |> append(list(...))
   dir_sub <- purrr::map_chr(
     seq_along(d_list),
     function(i) {
@@ -12,9 +12,9 @@ calc_dir_proj <- function(dir_base, iter = list(), ...) {
       )
       out
     }
-  ) %>%
+  ) |>
     paste0(collapse = "/")
-  file.path(dir_base, dir_sub) %>%
+  file.path(dir_base, dir_sub) |>
     fs::path_norm()
 }
 
@@ -109,7 +109,7 @@ get_folder <- function(nm, value) {
     "cyt_response_type" = value,
     "var_offset" = paste0(
       "o-", stringr::str_sub(value, end = min(nchar(value), 3)
-      ) %>%
+      ) |>
       paste0(collapse = "_")),
     "cyt_response_type_grp" = value,
     "response_type" = value,

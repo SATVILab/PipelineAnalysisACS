@@ -16,10 +16,8 @@
 install_pkg_private <- function(project,
                                 update = FALSE,
                                 gitcreds_url = "https://github.com" # nolint
-                                ) {
-
-  repo_vec_github_private <- switch(
-    project,
+) {
+  repo_vec_github_private <- switch(project,
     "acs_cytof_tcells" = c(
       "FredHutch/TuberculomicsCompendium",
       "SATVILab/pipeline",
@@ -61,7 +59,6 @@ install_pkg_private <- function(project,
   repo_vec_github_private_to_install <- # nolint
     repo_vec_github_private[repo_vec_github_private_to_install_ind] # nolint
   if (length(repo_vec_github_private_to_install) > 0) {
-
     if (!requireNamespace("gitcreds", quietly = TRUE)) {
       install.packages("gitcreds")
     }

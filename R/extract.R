@@ -71,7 +71,7 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
       var_name_vec
     )
 
-    results_list <- results_list %>% append(list("lr" = lr_tbl))
+    results_list <- results_list |> append(list("lr" = lr_tbl))
   }
 
   # non-parametric tests
@@ -81,7 +81,7 @@ extract <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
     iter = iter
   ))
 
-  results_list <- results_list %>%
+  results_list <- results_list |>
     append(list(
       "np" = np_tbl
     ))

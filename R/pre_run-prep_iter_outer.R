@@ -26,14 +26,14 @@ prep_iter <- function(rmd, iter, p_dots, ...) {
 
 .prep_iter_faust <- function(iter, data_raw) {
   purrr::map_df(unique(data_raw$den), function(den) {
-    data_raw_den <- data_raw %>%
+    data_raw_den <- data_raw |>
       dplyr::filter(den == .env$den)
     purrr::map_df(unique(data_raw_den$pop_main), function(pop_main) {
-      data_raw_den_pop_main <- data_raw_den %>%
+      data_raw_den_pop_main <- data_raw_den |>
         dplyr::filter(pop_main == .env$pop_main)
       purrr::map_df(unique(data_raw_den_pop_main$pop_sub_faust),
         function(pop_sub_faust) {
-          iter %>%
+          iter |>
             dplyr::mutate(
               den = den,
               pop_main = pop_main,
@@ -54,17 +54,17 @@ prep_iter <- function(rmd, iter, p_dots, ...) {
     return(iter)
   }
 
-  data_raw_add <- data_raw %>%
-    dplyr::select_at(dr_add_col_vec) %>%
-    dplyr::group_by_at(dr_add_col_vec) %>%
-    dplyr::slice(1) %>%
+  data_raw_add <- data_raw |>
+    dplyr::select_at(dr_add_col_vec) |>
+    dplyr::group_by_at(dr_add_col_vec) |>
+    dplyr::slice(1) |>
     dplyr::ungroup()
 
   purrr::map_df(seq_len(nrow(iter)), function(i) {
     iter_bind <- purrr::map_df(seq_len(nrow(data_raw_add)), function(x) {
       iter[i, ]
     })
-    iter_bind %>%
+    iter_bind |>
       dplyr::bind_cols(
         data_raw_add
       )
@@ -77,7 +77,7 @@ prep_iter <- function(rmd, iter, p_dots, ...) {
   purrr::map_df(
     unique(data_raw$cyt_combn),
     function(cyt_combn) {
-      iter %>%
+      iter |>
         dplyr::mutate(
           cyt_response_type_grp = cyt_combn
         )
@@ -93,7 +93,7 @@ prep_iter <- function(rmd, iter, p_dots, ...) {
   purrr::map_df(
     unique(data_raw$clust),
     function(clust) {
-      iter %>%
+      iter |>
         dplyr::mutate(
           clust = clust
         )

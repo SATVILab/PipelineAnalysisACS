@@ -18,11 +18,11 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
 
   # get residuals
   var_extract_vec <- c(var_plot_exp_vec, iter$var_dep)
-  data_plot <- data_mod[, var_extract_vec] %>%
+  data_plot <- data_mod[, var_extract_vec] |>
     dplyr::bind_cols(modutils::get_resid(fit_obj$full))
 
   # get fitted values
-  data_plot <- data_plot %>%
+  data_plot <- data_plot |>
     dplyr::bind_cols(modutils::get_pred(fit_obj$full)[, ".pred_resp"])
 
   # make univariate residual plots
@@ -43,7 +43,7 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
         type = "N(0,1)"
       )
       data_norm$y <- dnorm(data_norm$x)
-      data_plot_no_exp <- data_res_std_dens %>%
+      data_plot_no_exp <- data_res_std_dens |>
         dplyr::bind_rows(data_norm)
       return(list(
         p = ggplot(data_plot_no_exp) +
@@ -69,7 +69,7 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
       labs(y = "Standardised residuals")
 
     list(p = p, "save" = c("height" = 10, width = 18))
-  }) %>%
+  }) |>
     setNames(paste0("resid-", var_plot_vec))
 
   purrr::walk(seq_along(p_resid_list), function(i) {
@@ -107,7 +107,7 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
     list(p = p, save = c("height" = ifelse(var == ".no_exp_var",
       10, 10 * length(unique(data_plot[[var]])) / 2
     ), "width" = 18))
-  }) %>%
+  }) |>
     setNames(paste0("resid_vs_fitted-", var_plot_vec))
 
   purrr::walk(seq_along(p_resid_vs_fitted), function(i) {
@@ -145,7 +145,7 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
     list(p = p, save = c("height" = ifelse(var == ".no_exp_var",
       10, 10 * length(unique(data_plot[[var]])) / 2
     ), "width" = 18))
-  }) %>%
+  }) |>
     setNames(paste0("resid_vs_actual-", var_plot_vec))
 
   purrr::walk(seq_along(p_resid_vs_actual), function(i) {
@@ -183,7 +183,7 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
     list(p = p, save = c("height" = ifelse(var == ".no_exp_var",
       10, 10 * length(unique(data_plot[[var]])) / 2
     ), "width" = 18))
-  }) %>%
+  }) |>
     setNames(paste0("fitted_vs_actual-", var_plot_vec))
 
   purrr::walk(seq_along(p_fitted_vs_actual), function(i) {
@@ -202,7 +202,7 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
   # =======================
 
   var_exp_vec <- setdiff(var_plot_vec, ".no_exp_var")
-  var_exp_list <- as.list(var_exp_vec) %>% append(list(var_exp_vec))
+  var_exp_list <- as.list(var_exp_vec) |> append(list(var_exp_vec))
   var_spline_vec <- names(iter$var_exp_spline)
   knot_list <- switch(as.character(is.null(iter$var_exp_spline)),
     "TRUE" = list(),
@@ -211,7 +211,7 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
         return(x$params$knots)
       }
       NULL
-    }) %>%
+    }) |>
       setNames(names(iter$var_exp_spline))
   )
 
@@ -241,7 +241,7 @@ validate <- function(data_raw, data_mod, dir_proj, p_dots, fit_obj, iter) {
     break_vec[1] <- break_vec[1] - 0.01 * range_len
     break_vec[length(break_vec)] <- break_vec[length(break_vec)] + 0.01 * range_len
     break_vec
-  }) %>%
+  }) |>
     setNames(var_exp_vec)
   # browser()
   kw_obj <- map_df(var_exp_list, function(var_exp) {

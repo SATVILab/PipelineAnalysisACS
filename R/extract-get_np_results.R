@@ -22,7 +22,7 @@
       x = resp_vec,
       g = cat_vec_tfmttb
     )$p.value
-    results_tbl_np <- results_tbl_np %>%
+    results_tbl_np <- results_tbl_np |>
       dplyr::bind_rows(
         tibble::tibble(
           var = "tfmttb",
@@ -34,7 +34,7 @@
       x = resp_vec,
       g = data_mod$Progressor
     )$p.value
-    results_tbl_np <- results_tbl_np %>%
+    results_tbl_np <- results_tbl_np |>
       dplyr::bind_rows(
         tibble::tibble(
           var = "Progressor",
@@ -53,7 +53,7 @@
       g = cat_vec_int
     )$p.value
 
-    results_tbl_np <- results_tbl_np %>%
+    results_tbl_np <- results_tbl_np |>
       dplyr::bind_rows(
         tibble::tibble(
           var = "Progressor; tfmttb",
@@ -101,7 +101,7 @@
         x = resp_vec,
         g = cat_vec
       )$p.value
-      results_tbl_np <- results_tbl_np %>%
+      results_tbl_np <- results_tbl_np |>
         dplyr::bind_rows(
           tibble::tibble(
             var = paste0(iter$var_int, collapse = "; "),
@@ -121,7 +121,7 @@
         g = exp_vec
       )$p.value
 
-      results_tbl_np <- results_tbl_np %>%
+      results_tbl_np <- results_tbl_np |>
         dplyr::bind_rows(
           tibble::tibble(
             var = iter$var_exp,
@@ -138,7 +138,7 @@
         x = resp_vec,
         g = cat_vec
       )$p.value
-      results_tbl_np <- results_tbl_np %>%
+      results_tbl_np <- results_tbl_np |>
         dplyr::bind_rows(
           tibble::tibble(
             var = names(var_exp_s),

@@ -13,7 +13,7 @@ trans <- function(.data, trans) {
     return(.data)
   }
   if (is.function(trans)) {
-    .data <- .data %>%
+    .data <- .data |>
       dplyr::mutate(resp = trans(resp))
     return(.data)
   }
@@ -50,7 +50,7 @@ trans <- function(.data, trans) {
     "sqrt_pos" = function(x) sqrt(pmax(0, x)),
     stop("trans supplied but not recognised")
   )
-  .data %>%
+  .data |>
     dplyr::mutate(resp = trans_fn(resp))
 }
 
@@ -62,12 +62,12 @@ trans <- function(.data, trans) {
 #' Should be able to specify "single" as well.
 #' @export
 prep_bs_freq <- function(.data, cyt_response_type) {
-  .data <- .data %>%
+  .data <- .data |>
     dplyr::filter(grepl("\\+", .data$cyt_combn))
 
   # sum over cytokines
   .data <- switch(cyt_response_type,
-    "summed" = .data %>%
+    "summed" = .data |>
       UtilsCytoRSV::sum_over_markers(
         grp = c(
           "batch_sh", "SubjectID", "VisitType",
@@ -76,15 +76,15 @@ prep_bs_freq <- function(.data, cyt_response_type) {
         cmbn = "cyt_combn",
         levels = c("-", "+"),
         resp = c("count_stim", "count_uns")
-      ) %>%
+      ) |>
       dplyr::mutate(cyt_combn = "summed"),
-    "combn" = .data %>%
+    "combn" = .data |>
       dplyr::select(
         batch_sh, SubjectID, VisitType,
         cyt_combn,
         stim, n_cell_stim, n_cell_uns,
         count_stim, count_uns
-      ) %>%
+      ) |>
       dplyr::filter(grepl("\\+", cyt_combn)),
     stop(paste0(
       paste0(cyt_response_type, collapse = "/"),
@@ -116,45 +116,45 @@ add_clinical_data_and_filter <- function(.data,
                                          ),
                                          ttb_min = NULL,
                                          ttb_max) {
-  cols_add <- unique(c(cols_add_perm, cols_add)) %>%
+  cols_add <- unique(c(cols_add_perm, cols_add)) |>
     setdiff("n_cell")
   cols_add <- unique(cols_add)
   cols_join <- unique(cols_join)
   clinical_data_add <- DataTidyACSClinical::data_tidy_clinical
   clinical_data_add <- clinical_data_add[, colnames(clinical_data_add) %in%
     c(cols_join, cols_add)]
-  clinical_data_add <- clinical_data_add %>%
-    dplyr::mutate(SampleID = paste0(.data$SubjectID, "_", .data$VisitType)) %>%
+  clinical_data_add <- clinical_data_add |>
+    dplyr::mutate(SampleID = paste0(.data$SubjectID, "_", .data$VisitType)) |>
     dplyr::filter(SampleID %in% unique(
-      .env$.data %>%
-        dplyr::mutate(SampleID = paste0(.data$SubjectID, "_", .data$VisitType)) %>%
+      .env$.data |>
+        dplyr::mutate(SampleID = paste0(.data$SubjectID, "_", .data$VisitType)) |>
         dplyr::pull("SampleID")
-    )) %>%
+    )) |>
     dplyr::select(-SampleID)
 
-  clinical_data_add <- clinical_data_add %>%
-    dplyr::group_by_at(c(cols_join, setdiff(cols_add, "tfmttb"))) %>%
-    dplyr::slice(1) %>%
+  clinical_data_add <- clinical_data_add |>
+    dplyr::group_by_at(c(cols_join, setdiff(cols_add, "tfmttb"))) |>
+    dplyr::slice(1) |>
     dplyr::ungroup()
 
   # check that there is only one row per key
   # (key is combn of joining col levels)
-  clinical_data_add_check <- clinical_data_add %>%
-    dplyr::group_by_at(cols_join) %>%
-    dplyr::summarise(cnt = dplyr::n()) %>%
-    dplyr::ungroup() %>%
-    dplyr::summarise(g_1 = any(cnt > 1)) %>%
+  clinical_data_add_check <- clinical_data_add |>
+    dplyr::group_by_at(cols_join) |>
+    dplyr::summarise(cnt = dplyr::n()) |>
+    dplyr::ungroup() |>
+    dplyr::summarise(g_1 = any(cnt > 1)) |>
     dplyr::pull(g_1)
   if (clinical_data_add_check) stop("clinical_data has more than one row per key")
 
-  clinical_data_add <- clinical_data_add %>%
+  clinical_data_add <- clinical_data_add |>
     dplyr::filter(timeToTBFromVisit >= 0 | is.na(timeToTBFromVisit))
 
-  clinical_data_add <- clinical_data_add %>%
+  clinical_data_add <- clinical_data_add |>
     dplyr::filter(Progressor %in% c("yes", "no"))
 
   if (!is.null(ttb_min)) {
-    clinical_data_add <- clinical_data_add %>%
+    clinical_data_add <- clinical_data_add |>
       dplyr::mutate(timeToTBFromVisit = pmax(.data$timeToTBFromVisit, ttb_min))
   }
   ttb_max <- ifelse(is.na(ttb_max),
@@ -163,7 +163,7 @@ add_clinical_data_and_filter <- function(.data,
     ),
     ttb_max
   )
-  clinical_data_add <- clinical_data_add %>%
+  clinical_data_add <- clinical_data_add |>
     dplyr::mutate(
       tfmttb = ifelse(Progressor == "no", # make zero non-progressor
         0,
@@ -182,10 +182,10 @@ add_clinical_data_and_filter <- function(.data,
       cols_join
     ))]
 
-  cn_vec_orig <- colnames(.data) %>%
+  cn_vec_orig <- colnames(.data) |>
     setdiff(cols_join)
 
-  .data <- .data %>%
+  .data <- .data |>
     dplyr::inner_join(
       clinical_data_add,
       by = cols_join
@@ -198,7 +198,7 @@ add_clinical_data_and_filter <- function(.data,
       cn_vec_orig,
       c(cols_join, cols_add)
     )
-  ) %>%
+  ) |>
     unique()]
 
   .data
@@ -216,13 +216,13 @@ add_tc_assay_data <- function(.data,
   }
 
   cols_add_split <- stringr::str_split(cols_add, "~")
-  assay_vec <- purrr::map_chr(cols_add_split, function(x) x[1]) %>%
+  assay_vec <- purrr::map_chr(cols_add_split, function(x) x[1]) |>
     unique()
   assay_to_cols_add <- purrr::map(assay_vec, function(x) {
     purrr::map_chr(cols_add_split, function(x) x[2])[
       purrr::map_chr(cols_add_split, function(x) x[1]) == x
     ]
-  }) %>%
+  }) |>
     setNames(assay_vec)
 
   for (assay in assay_vec) {
@@ -256,7 +256,7 @@ add_tc_assay_data <- function(.data,
 
   var_tbl_add[, cols_add] <- var_tbl_add$CD4IFNg / var_tbl_add$CD4 * 1e2
   var_tbl_add <- var_tbl_add[, unique(c(cols_join, cols_add))]
-  .data %>%
+  .data |>
     dplyr::inner_join(
       var_tbl_add,
       by = cols_join
@@ -267,16 +267,16 @@ add_tc_assay_data <- function(.data,
                                     cols_add,
                                     cols_join,
                                     ...) {
-  var_tbl_add <- DataTidyACSSoma::data_tidy_soma %>%
+  var_tbl_add <- DataTidyACSSoma::data_tidy_soma |>
     dplyr::mutate(
       # prevents failures when fitting formula later
       Soma_Target = gsub("\\W", "", Soma_Target)
-    ) %>%
-    dplyr::filter(Soma_Target %in% cols_add) %>%
-    dplyr::group_by_at(c(cols_join, "Soma_Target")) %>%
-    dplyr::slice(1) %>%
+    ) |>
+    dplyr::filter(Soma_Target %in% cols_add) |>
+    dplyr::group_by_at(c(cols_join, "Soma_Target")) |>
+    dplyr::slice(1) |>
     dplyr::ungroup()
-  var_tbl_add <- var_tbl_add %>%
+  var_tbl_add <- var_tbl_add |>
     tidyr::pivot_wider(
       id_cols = cols_join,
       names_from = "Soma_Target",
@@ -286,7 +286,7 @@ add_tc_assay_data <- function(.data,
   var_tbl_add <- var_tbl_add[, c(cols_join, cols_add)]
   new_col_vec <- setdiff(colnames(var_tbl_add), cols_join)
 
-  .data <- .data %>%
+  .data <- .data |>
     dplyr::inner_join(
       var_tbl_add,
       by = cols_join
@@ -307,7 +307,7 @@ add_tc_assay_data <- function(.data,
                                      cols_add,
                                      cols_join,
                                      ...) {
-  .data <- .data %>%
+  .data <- .data |>
     dplyr::inner_join(
       DataTidyACSRISK6::data_tidy_risk6,
       by = cols_join
@@ -330,7 +330,7 @@ add_tc_assay_data <- function(.data,
     stop(paste0(paste0(cols_add, collapse = "/"), "not recognised"))
   )
 
-  .data %>%
+  .data |>
     dplyr::inner_join(
       data_join,
       by = cols_join
@@ -349,14 +349,14 @@ scale_var <- function(.data, cols = NULL) {
   }
 
   if ("tfmttb" %in% cols && "tfmttb" %in% colnames(.data)) {
-    .data <- .data %>%
+    .data <- .data |>
       dplyr::mutate(
         origMeantfmttb = mean(tfmttb),
         tfmttb = tfmttb / 1e2
       )
   }
   if ("DaysSinceEntry" %in% cols && "DaysSinceEntry" %in% colnames(.data)) {
-    .data <- .data %>%
+    .data <- .data |>
       dplyr::mutate(DaysSinceEntry = (DaysSinceEntry - mean(DaysSinceEntry)) /
         sd(DaysSinceEntry))
   }
