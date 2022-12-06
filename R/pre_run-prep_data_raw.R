@@ -26,7 +26,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       if (!requireNamespace("DataTidyACSPepSeq", quietly = TRUE)) {
         remotes::install_github("SATVILab/DataTidyACSPepSeq")
       }
-      data_raw <- DataTidyACSPepSeq::data_tidy_pepseq %>%
+      data_raw <- DataTidyACSPepSeq::data_tidy_pepseq |>
         dplyr::filter(virus == iter$virus)
       data_raw
     },
@@ -42,11 +42,11 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       if (!requireNamespace("DataTidyACSCyTOFFAUST", quietly = TRUE)) {
         remotes::install_github("SATVILab/DataTidyACSCyTOFFAUST")
       }
-      data_raw <- DataTidyACSCyTOFFAUST::data_tidy_faust %>%
+      data_raw <- DataTidyACSCyTOFFAUST::data_tidy_faust |>
         dplyr::rename(
           resp = count,
           pop_sub_faust = pop
-        ) %>%
+        ) |>
         dplyr::filter(stim == iter$stim)
 
       if ("pop" %in% names(iter)) {
@@ -55,47 +55,47 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           "tcell" = c("tcrgd", "cd8", "cd4")
         )
 
-        data_raw <- data_raw %>%
+        data_raw <- data_raw |>
           dplyr::filter(
             pop_main %in% pop_to_inc_vec
           )
       }
-      data_raw %>%
+      data_raw |>
         dplyr::bind_rows(
-          data_raw %>%
-            dplyr::filter(den != "all") %>%
-            dplyr::group_by(SubjectID, VisitType, stim, den, pop_main) %>%
+          data_raw |>
+            dplyr::filter(den != "all") |>
+            dplyr::group_by(SubjectID, VisitType, stim, den, pop_main) |>
             dplyr::summarise(
               resp = n_cell[1],
               pop_main = den[1],
               pop_sub_faust = den[1]
-            ) %>%
-            dplyr::ungroup() %>%
-            dplyr::select(-den) %>%
+            ) |>
+            dplyr::ungroup() |>
+            dplyr::select(-den) |>
             dplyr::left_join(
-              data_raw %>%
-                dplyr::filter(den == "all") %>%
+              data_raw |>
+                dplyr::filter(den == "all") |>
                 dplyr::select(
                   SubjectID, VisitType, stim, n_cell
-                ) %>%
+                ) |>
                 dplyr::group_by(
                   SubjectID, VisitType, stim
-                ) %>%
-                dplyr::slice(1) %>%
+                ) |>
+                dplyr::slice(1) |>
                 dplyr::ungroup(),
               by = c("SubjectID", "VisitType", "stim")
-            ) %>%
+            ) |>
             dplyr::mutate(den = "all")
-        ) %>%
+        ) |>
         dplyr::select(
           SubjectID:stim, den, pop_main, pop_sub_faust, n_cell, resp
-        ) %>%
+        ) |>
         dplyr::mutate(
           pop_main = ifelse(is.na(pop_main), pop_sub_faust, pop_main)
         )
     },
     "inner" = {
-      data_raw %>%
+      data_raw |>
         dplyr::filter(
           den == iter$den,
           pop_main == iter$pop_main,
@@ -153,7 +153,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       )
 
       # remove all_u- from stim
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::mutate(stim = gsub("all_u-", "", stim))
 
       # filter
@@ -162,11 +162,11 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         "n_clusters"
       )]
 
-      filter_tbl <- filter_tbl %>%
+      filter_tbl <- filter_tbl |>
         dplyr::rename(
           n_clust = n_clusters,
           responders_only = non_responder_inclusion
-        ) %>%
+        ) |>
         dplyr::mutate(
           responders_only = ifelse(responders_only == "inc",
             "all", "r_o"
@@ -174,27 +174,27 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           exc = exc
         )
 
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         filter_using_list(
           filter_list = filter_tbl
         )
 
       # remove clusters that have low stability
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::filter(stability > 0.5)
 
       # remove non-responding subsets
-      data_raw <- data_raw %>%
-        dplyr::group_by(clust) %>%
+      data_raw <- data_raw |>
+        dplyr::group_by(clust) |>
         dplyr::select(
           SubjectID, VisitType, stim, exc, gn, scale, n_clust, clust,
           n_cell_tot_stim, n_cell_tot_uns,
           count_stim, count_uns, prob
-        ) %>%
+        ) |>
         dplyr::filter(
           median(prob, na.rm = TRUE) > 0.5,
           (sum(!is.na(prob)) / dplyr::n()) > 0.75
-        ) %>%
+        ) |>
         dplyr::ungroup()
 
       # add in total number of cells in sample
@@ -233,23 +233,23 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$stats_combn_tbl
         }
       )
-      n_cell_tbl <- n_cell_tbl %>%
-        dplyr::group_by(SubjectID, VisitType, stim) %>%
+      n_cell_tbl <- n_cell_tbl |>
+        dplyr::group_by(SubjectID, VisitType, stim) |>
         dplyr::summarise(
           n_cell_tot_stim = n_cell_stim[1],
           n_cell_tot_uns = n_cell_uns[1],
           .groups = "drop"
         )
 
-      data_raw <- data_raw %>%
-        dplyr::select(-c(n_cell_tot_stim, n_cell_tot_uns)) %>%
+      data_raw <- data_raw |>
+        dplyr::select(-c(n_cell_tot_stim, n_cell_tot_uns)) |>
         dplyr::left_join(
           n_cell_tbl,
           by = c("SubjectID", "VisitType", "stim")
         )
 
       # replace count_uns & count_stim with zero
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::mutate(
           count_stim = ifelse(is.na(count_stim), 0, count_stim),
           count_unst = ifelse(is.na(count_uns), 0, count_uns),
@@ -257,12 +257,12 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 
       # calculating freq_stim and freq_uns,
       # as in the per-cluster freq_stim and freq_stim
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         UtilsCytoRSV::calc_freq(
           num = "count_stim",
           den = "n_cell_tot_stim",
           nm = "freq_tot_clust_stim"
-        ) %>%
+        ) |>
         UtilsCytoRSV::calc_freq(
           num = "count_uns",
           den = "n_cell_tot_uns",
@@ -270,37 +270,37 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         )
       # calculate freq_bs, and then calculate the
       # number of ag + cells
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::mutate(
           freq_tot_clust_bs = freq_tot_clust_stim - freq_tot_clust_uns,
           count_clust_ag = (freq_tot_clust_bs / 1e2) * n_cell_tot_stim
         )
 
       # calculate the number of ag-specific cells
-      data_raw <- data_raw %>%
-        dplyr::group_by(SubjectID, VisitType) %>%
-        dplyr::mutate(count_clust_ag = ifelse(prob < 0.33, 0, count_clust_ag)) %>%
-        dplyr::mutate(n_cell_ag = sum(count_clust_ag)) %>%
+      data_raw <- data_raw |>
+        dplyr::group_by(SubjectID, VisitType) |>
+        dplyr::mutate(count_clust_ag = ifelse(prob < 0.33, 0, count_clust_ag)) |>
+        dplyr::mutate(n_cell_ag = sum(count_clust_ag)) |>
         dplyr::ungroup()
 
       # calculate the frequency of ag-specific
       # cells that belong to a given cluster
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::mutate(freq_ag = count_clust_ag /
-          n_cell_ag * 1e2) %>%
-        dplyr::mutate(freq_ag = pmax(freq_ag, 0)) %>%
+          n_cell_ag * 1e2) |>
+        dplyr::mutate(freq_ag = pmax(freq_ag, 0)) |>
         dplyr::mutate(count_ag = (freq_ag / 1e2) * n_cell_ag)
 
       # check that there is only one
       # observation per sample and cluster
-      check_g_1 <- data_raw %>%
-        dplyr::group_by(SubjectID, VisitType, clust) %>%
+      check_g_1 <- data_raw |>
+        dplyr::group_by(SubjectID, VisitType, clust) |>
         dplyr::summarise(
           cnt = dplyr::n(),
           .groups = "drop"
-        ) %>%
-        dplyr::ungroup() %>%
-        dplyr::summarise(n_g_1 = any(cnt > 1)) %>%
+        ) |>
+        dplyr::ungroup() |>
+        dplyr::summarise(n_g_1 = any(cnt > 1)) |>
         dplyr::pull(n_g_1)
       if (check_g_1) {
         stop(
@@ -309,52 +309,52 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       }
 
       data_raw <- switch(iter$response_type,
-        "freq_tot_bs" = data_raw %>%
+        "freq_tot_bs" = data_raw |>
           dplyr::group_by(
             SubjectID, VisitType,
             clust,
             n_cell_tot_stim,
             n_cell_tot_uns
-          ) %>%
+          ) |>
           dplyr::summarise(
             prob = mean(prob),
             n_cell = n_cell_tot_stim[1],
             resp = sum(count_clust_ag)
-          ) %>%
+          ) |>
           dplyr::ungroup(),
-        "freq_ag" = data_raw %>%
+        "freq_ag" = data_raw |>
           dplyr::rename(
             n_cell = n_cell_ag,
             resp = count_clust_ag,
             prob = prob
-          ) %>%
-          dplyr::mutate(n_cell = pmax(round(n_cell), 1)) %>%
-          dplyr::mutate(resp = round(resp) / n_cell) %>%
-          dplyr::group_by(SubjectID, VisitType) %>%
-          dplyr::filter((1 - prod(1 - prob)) > 0.5) %>%
-          dplyr::ungroup() %>%
+          ) |>
+          dplyr::mutate(n_cell = pmax(round(n_cell), 1)) |>
+          dplyr::mutate(resp = round(resp) / n_cell) |>
+          dplyr::group_by(SubjectID, VisitType) |>
+          dplyr::filter((1 - prod(1 - prob)) > 0.5) |>
+          dplyr::ungroup() |>
           dplyr::select(
             SubjectID, VisitType, clust,
             n_cell_tot_stim, prob, count_stim,
             count_uns, n_cell, resp
-          ) %>%
+          ) |>
           dplyr::filter(length(unique(clust)) > 1),
-        "prob" = data_raw %>%
+        "prob" = data_raw |>
           dplyr::rename(
             resp = prob
-          ) %>%
-          dplyr::select(SubjectID, VisitType, clust, resp) %>%
-          dplyr::group_by(clust) %>%
+          ) |>
+          dplyr::select(SubjectID, VisitType, clust, resp) |>
+          dplyr::group_by(clust) |>
           dplyr::mutate(
             sd = sd(resp, na.rm = TRUE),
             iqr = quantile(.data[["resp"]], na.rm = TRUE, 0.75) -
               quantile(.data[["resp"]], na.rm = TRUE, 0.25)
-          ) %>%
+          ) |>
           dplyr::filter(
             sd(resp, na.rm = TRUE) > 0.2,
             iqr > 0.3
-          ) %>%
-          dplyr::ungroup() %>%
+          ) |>
+          dplyr::ungroup() |>
           dplyr::select(-c(sd, iqr)),
         stop(paste0(iter$response_type, " not recognised"))
       )
@@ -362,7 +362,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     "inner" = switch(iter$response_type,
       "freq_tot_bs" = , # nolint
       "freq_ag" = , # nolint
-      "prob" = data_raw %>%
+      "prob" = data_raw |>
         dplyr::filter(.data$clust == iter$clust),
       stop(paste0(iter$response_type, " not recognised"))
     )
@@ -378,12 +378,12 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 
       data_raw <- DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$hladr
 
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         filter_using_list(
           filter_list = iter["stim"]
         )
 
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::mutate(
           SubjectID = substr(.data$fcs, start = 1, stop = 6),
           fcs = substr(.data$fcs, start = 8, stop = nchar(fcs)),
@@ -393,25 +393,25 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           })
         )
 
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::rename(resp = hladr_med_diff)
 
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::select(-c(
           batch, batch_sh, fcs, ind, is_uns, mult,
           ind_in_batch, hladr_med_pos, hladr_med_neg,
           chnl, gate_name
-        )) %>%
+        )) |>
         dplyr::select(SubjectID, VisitType, stim, resp)
 
-      check_g_1 <- data_raw %>%
-        dplyr::group_by(SubjectID, VisitType) %>%
+      check_g_1 <- data_raw |>
+        dplyr::group_by(SubjectID, VisitType) |>
         dplyr::summarise(
           cnt = dplyr::n(),
           .groups = "drop"
-        ) %>%
-        dplyr::ungroup() %>%
-        dplyr::summarise(n_g_1 = any(cnt > 1)) %>%
+        ) |>
+        dplyr::ungroup() |>
+        dplyr::summarise(n_g_1 = any(cnt > 1)) |>
         dplyr::pull(n_g_1)
       if (check_g_1) {
         stop(
@@ -451,8 +451,8 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   if (!requireNamespace("DataTidyACSCyTOFFAUST", quietly = TRUE)) {
     remotes::install_github("SATVILab/DataTidyACSCyTOFFAUST")
   }
-  data_raw <- DataTidyACSCyTOFFAUST::data_tidy_faust %>%
-    dplyr::filter(stim %in% c("mtb", "p1")) %>%
+  data_raw <- DataTidyACSCyTOFFAUST::data_tidy_faust |>
+    dplyr::filter(stim %in% c("mtb", "p1")) |>
     dplyr::filter(pop_main == "cd4")
 }
 
@@ -501,7 +501,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       }
 
       # select required columns
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::select(
           SubjectID, VisitType, stim, cyt_combn,
           count_stim, n_cell_stim, count_uns,
@@ -509,13 +509,13 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         )
 
       # filter
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         filter_using_list(
           filter_list = iter["stim"]
         )
 
       # calculate background-subtracted frequencies, if need be
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         .subtract_background()
 
       # convert cyt combn from COMPASS format
@@ -525,12 +525,14 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       )
 
       # remove all-neg cyt_combn
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::filter(stringr::str_detect(cyt_combn, "\\+"))
 
       # sum over markers
+      data_raw_combn <- data_raw |>
+        dplyr::mutate(resp = freq_bs * n_cell)
       data_raw <- switch(iter$cyt_response_type,
-        "summed" = data_raw %>%
+        "summed" = data_raw |>
           UtilsCytoRSV::sum_over_markers(
             grp = c(
               "SubjectID", "VisitType",
@@ -539,8 +541,8 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
             cmbn = "cyt_combn",
             levels = c("-", "+"),
             resp = c("freq_bs")
-          ) %>%
-          dplyr::mutate(cyt_combn = "summed") %>%
+          ) |>
+          dplyr::mutate(cyt_combn = "summed") |>
           dplyr::mutate(resp = freq_bs * n_cell),
         "cyt_prop" = , # nolint
         "cyt" = {
@@ -549,7 +551,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           )[[1]]
           marker_vec <- marker_vec[-which(marker_vec == "")]
           purrr::map_df(marker_vec, function(mk) {
-            data_raw %>%
+            data_raw |>
               UtilsCytoRSV::sum_over_markers(
                 grp = c(
                   "SubjectID", "VisitType",
@@ -559,7 +561,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
                 markers_to_sum = setdiff(marker_vec, mk),
                 levels = c("-", "+"),
                 resp = c("freq_bs", "resp")
-              ) %>%
+              ) |>
               dplyr::filter(grepl("\\+", cyt_combn))
           })
         },
@@ -605,16 +607,16 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
               }
               DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$compass
             }
-          ) %>%
-            magrittr::extract2("locb0.15_min_clust") %>%
+          ) |>
+            magrittr::extract2("locb0.15_min_clust") |>
             magrittr::extract2(iter$stim)
 
           if (is.null(compass_obj)) {
             return(data_raw[1, ][-1, ])
           }
 
-          compass_obj <- compass_obj %>%
-            magrittr::extract2("fit") %>%
+          compass_obj <- compass_obj |>
+            magrittr::extract2("fit") |>
             magrittr::extract2("mean_gamma")
 
           .remove_cyt_low_prob(
@@ -657,16 +659,16 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
               }
               DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$compass
             }
-          ) %>%
-            magrittr::extract2("locb0.15_min_clust") %>%
+          ) |>
+            magrittr::extract2("locb0.15_min_clust") |>
             magrittr::extract2(iter$stim)
 
           if (is.null(compass_obj)) {
             return(data_raw[1, ][-1, ])
           }
 
-          compass_obj <- compass_obj %>%
-            magrittr::extract2("fit") %>%
+          compass_obj <- compass_obj |>
+            magrittr::extract2("fit") |>
             magrittr::extract2("mean_gamma")
 
           .remove_combn_low_prob(
@@ -695,46 +697,46 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
               if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
                 remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
               }
-              DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$post_probs_bulk %>%
+              DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$post_probs_bulk |>
                 magrittr::extract2("exc-Nd146Di")
             },
             "cd8_th1" = {
               if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
                 remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
               }
-              DataTidyACSCyTOFCytokinesTCells::cd8_th1$post_probs_bulk %>%
+              DataTidyACSCyTOFCytokinesTCells::cd8_th1$post_probs_bulk |>
                 magrittr::extract2("exc-Nd146Di")
             },
             "tcrgd_th1" = {
               if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
                 remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
               }
-              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$post_probs_bulk %>%
+              DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$post_probs_bulk |>
                 magrittr::extract2("exc-Nd146Di")
             },
             "nk_ifng_tnf_il22" = {
               if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
                 remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
               }
-              DataTidyACSCyTOFCytokinesNKBCells::nk_ifng_tnf_il22$post_probs_bulk %>%
+              DataTidyACSCyTOFCytokinesNKBCells::nk_ifng_tnf_il22$post_probs_bulk |>
                 magrittr::extract2("exc-Nd146Di")
             },
             "bcell_ifng_il6" = {
               if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
                 remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
               }
-              DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$post_probs_bulk %>%
+              DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$post_probs_bulk |>
                 magrittr::extract2("exc-Nd146Di")
             }
-          ) %>%
-            magrittr::extract2("locb0.15_min_clust") %>%
+          ) |>
+            magrittr::extract2("locb0.15_min_clust") |>
             magrittr::extract2(iter$stim)
 
           if (is.null(prob_tbl)) {
             return(data_raw[1, ][-1, ])
           }
 
-          data_raw %>%
+          data_raw |>
             dplyr::filter(
               paste0(SubjectID, "_", VisitType) %in%
                 prob_tbl[["sampleid"]][prob_tbl[["prob"]] > 0.75]
@@ -748,36 +750,75 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         "summed" = , # nolint
         "cyt" = , # nolint
         "combn" = data_raw,
-        "cyt_prop" = , # nolint
-        "combn_prop" = {
-          data_raw %>%
-            dplyr::group_by(SubjectID, VisitType, stim) %>%
-            dplyr::mutate(n_cell_ag = sum(resp)) %>%
-            dplyr::mutate(n_cell_ag = round(n_cell_ag)) %>%
-            dplyr::filter(n_cell_ag >= 1) %>%
-            dplyr::mutate(resp = resp / n_cell_ag) %>%
-            dplyr::mutate(resp = pmin(1, resp) %>%
-              pmax(0)) %>%
-            dplyr::select(-c(n_cell, freq_bs)) %>%
-            dplyr::rename(n_cell = n_cell_ag) %>%
-            dplyr::ungroup() %>%
+        "cyt_prop" = {
+          cyt_vec <- unique(data_raw[["cyt_combn"]])
+          cyt_vec <- gsub("\\+$", "\\\\+", cyt_vec)
+          cyt_pattern <- paste0(cyt_vec, collapse = "|")
+          data_raw_ag_tot <- data_raw_combn |>
+            dplyr::filter(grepl(cyt_pattern, cyt_combn)) |>
+            dplyr::group_by(SubjectID, VisitType, stim) |>
+            dplyr::summarise(n_cell_ag = sum(resp), .groups = "drop")
+          data_raw |>
+            dplyr::left_join(
+              data_raw_ag_tot, by = c("SubjectID", "VisitType", "stim")
+              ) |>
+            dplyr::group_by(SubjectID, VisitType, stim) |>
+              dplyr::filter(n_cell_ag >= 5) |>
+            dplyr::filter(resp > n_cell_ag) |>
+            dplyr::mutate(resp = resp / n_cell_ag) |>
+            dplyr::mutate(resp = pmin(1, resp) |>
+              pmax(0)) |>
+            dplyr::select(-c(n_cell, freq_bs)) |>
+            dplyr::rename(n_cell = n_cell_ag) |>
+            dplyr::ungroup() |>
             dplyr::select(
               SubjectID, VisitType,
               stim, cyt_combn, n_cell, resp
-            ) %>%
-            dplyr::filter(length(unique(cyt_combn)) > 1) %>%
-            dplyr::select(SubjectID, VisitType, cyt_combn, n_cell, resp) %>%
-            dplyr::group_by(cyt_combn) %>%
+            ) |>
+            dplyr::filter(length(unique(cyt_combn)) > 1) |>
+            dplyr::select(SubjectID, VisitType, cyt_combn, n_cell, resp) |>
+            dplyr::group_by(cyt_combn) |>
             dplyr::mutate(
               sd = sd(resp, na.rm = TRUE),
               iqr = quantile(.data[["resp"]], na.rm = TRUE, 0.75) -
                 quantile(.data[["resp"]], na.rm = TRUE, 0.25)
-            ) %>%
+            ) |>
             dplyr::filter(
               sd(resp, na.rm = TRUE) > 0.1,
               iqr > 0.15
-            ) %>% # was 0.2
-            dplyr::ungroup() %>%
+            ) |> # was 0.2
+            dplyr::ungroup() |>
+            dplyr::select(-c(sd, iqr))
+        }, # nolint
+        "combn_prop" = {
+          data_raw |>
+            dplyr::group_by(SubjectID, VisitType, stim) |>
+            dplyr::mutate(n_cell_ag = sum(resp)) |>
+            dplyr::mutate(n_cell_ag = round(n_cell_ag)) |>
+            dplyr::filter(n_cell_ag >= 1) |>
+            dplyr::mutate(resp = resp / n_cell_ag) |>
+            dplyr::mutate(resp = pmin(1, resp) |>
+              pmax(0)) |>
+            dplyr::select(-c(n_cell, freq_bs)) |>
+            dplyr::rename(n_cell = n_cell_ag) |>
+            dplyr::ungroup() |>
+            dplyr::select(
+              SubjectID, VisitType,
+              stim, cyt_combn, n_cell, resp
+            ) |>
+            dplyr::filter(length(unique(cyt_combn)) > 1) |>
+            dplyr::select(SubjectID, VisitType, cyt_combn, n_cell, resp) |>
+            dplyr::group_by(cyt_combn) |>
+            dplyr::mutate(
+              sd = sd(resp, na.rm = TRUE),
+              iqr = quantile(.data[["resp"]], na.rm = TRUE, 0.75) -
+                quantile(.data[["resp"]], na.rm = TRUE, 0.25)
+            ) |>
+            dplyr::filter(
+              sd(resp, na.rm = TRUE) > 0.1,
+              iqr > 0.15
+            ) |> # was 0.2
+            dplyr::ungroup() |>
             dplyr::select(-c(sd, iqr))
         },
         stop(paste0(iter$cyt_response_type, " not recognised"))
@@ -798,20 +839,20 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           )),
           "$"
         )
-        data_raw <- data_raw %>%
+        data_raw <- data_raw |>
           dplyr::filter(grepl(
             combn_comp,
             .data$cyt_combn
           ))
 
-        check_g_1 <- data_raw %>%
-          dplyr::group_by(SubjectID, VisitType) %>%
+        check_g_1 <- data_raw |>
+          dplyr::group_by(SubjectID, VisitType) |>
           dplyr::summarise(
             cnt = dplyr::n(),
             .groups = "drop"
-          ) %>%
-          dplyr::ungroup() %>%
-          dplyr::summarise(n_g_1 = any(cnt > 1)) %>%
+          ) |>
+          dplyr::ungroup() |>
+          dplyr::summarise(n_g_1 = any(cnt > 1)) |>
           dplyr::pull(n_g_1)
 
         if (check_g_1) {
@@ -862,8 +903,8 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           }
           DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$compass
         }
-      ) %>%
-        magrittr::extract2("locb0.15_min_clust") %>%
+      ) |>
+        magrittr::extract2("locb0.15_min_clust") |>
         magrittr::extract2(iter$stim)
       if (is.null(data_raw)) {
         return(
@@ -876,15 +917,15 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         )
       }
 
-      data_raw <- data_raw %>%
-        magrittr::extract2("fit") %>%
+      data_raw <- data_raw |>
+        magrittr::extract2("fit") |>
         magrittr::extract2("mean_gamma")
 
       rn_vec <- rownames(data_raw)
 
-      data_raw <- data_raw %>%
-        tibble::as_tibble() %>%
-        dplyr::mutate(SampleID = rn_vec) %>%
+      data_raw <- data_raw |>
+        tibble::as_tibble() |>
+        dplyr::mutate(SampleID = rn_vec) |>
         dplyr::select(SampleID, everything())
 
       colnames(data_raw)[-1] <-
@@ -893,7 +934,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           to = "std"
         )
 
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         tidyr::pivot_longer(
           -SampleID,
           names_to = "combn",
@@ -901,7 +942,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         )
 
       # remove all-neg cyt_combn
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::filter(stringr::str_detect(combn, "\\+"))
 
       # calculate per-cyt/cyt_combn probability of a response
@@ -913,17 +954,17 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           )[[1]]
           marker_vec <- marker_vec[-which(marker_vec == "")]
           purrr::map_df(marker_vec, function(mk) {
-            data_raw %>%
+            data_raw |>
               dplyr::filter(grepl(
                 paste0(mk, "\\+"),
                 combn
-              )) %>%
-              dplyr::mutate(combn = paste0(mk, "+")) %>%
-              dplyr::group_by(SampleID, combn) %>%
+              )) |>
+              dplyr::mutate(combn = paste0(mk, "+")) |>
+              dplyr::group_by(SampleID, combn) |>
               dplyr::summarise(
                 prob = 1 - prod(1 - prob),
                 .groups = "drop_last"
-              ) %>%
+              ) |>
               dplyr::ungroup()
           })
         }
@@ -931,23 +972,23 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 
       quant_min <- 0.25
       prob_min <- 0.8
-      combn_vec_sel <- data_raw %>%
-        dplyr::group_by(combn) %>%
-        dplyr::filter(quantile(.data$prob, 1 - quant_min) >= prob_min) %>%
-        dplyr::slice(1) %>%
-        dplyr::ungroup() %>%
+      combn_vec_sel <- data_raw |>
+        dplyr::group_by(combn) |>
+        dplyr::filter(quantile(.data$prob, 1 - quant_min) >= prob_min) |>
+        dplyr::slice(1) |>
+        dplyr::ungroup() |>
         dplyr::pull("combn")
 
-      data_raw <- data_raw %>%
+      data_raw <- data_raw |>
         dplyr::filter(combn %in% combn_vec_sel)
 
-      data_raw %>%
+      data_raw |>
         tidyr::separate(
           col = SampleID,
           into = c("SubjectID", "VisitType"),
           sep = "_"
-        ) %>%
-        dplyr::rename(cyt_combn = combn) %>%
+        ) |>
+        dplyr::rename(cyt_combn = combn) |>
         dplyr::rename(resp = prob)
     },
     "inner" = switch(iter$cyt_response_type,
@@ -960,20 +1001,20 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           )),
           "$"
         )
-        data_raw <- data_raw %>%
+        data_raw <- data_raw |>
           dplyr::filter(grepl(
             combn_comp,
             .data$cyt_combn
           ))
 
-        check_g_1 <- data_raw %>%
-          dplyr::group_by(SubjectID, VisitType) %>%
+        check_g_1 <- data_raw |>
+          dplyr::group_by(SubjectID, VisitType) |>
           dplyr::summarise(
             cnt = dplyr::n(),
             .groups = "drop"
-          ) %>%
-          dplyr::ungroup() %>%
-          dplyr::summarise(n_g_1 = any(cnt > 1)) %>%
+          ) |>
+          dplyr::ungroup() |>
+          dplyr::summarise(n_g_1 = any(cnt > 1)) |>
           dplyr::pull(n_g_1)
 
         if (check_g_1) {
@@ -1022,8 +1063,8 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           }
           DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$compass
         }
-      ) %>%
-        magrittr::extract2("locb0.15_min_clust") %>%
+      ) |>
+        magrittr::extract2("locb0.15_min_clust") |>
         magrittr::extract2(iter$stim)
 
       if (is.null(data_raw)) {
@@ -1037,10 +1078,10 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         )
       }
 
-      data_raw <- data_raw %>%
-        COMPASS::scores() %>%
-        tibble::as_tibble() %>%
-        dplyr::select(SampleID, SubjectID, VisitType, FS, PFS) %>%
+      data_raw <- data_raw |>
+        COMPASS::scores() |>
+        tibble::as_tibble() |>
+        dplyr::select(SampleID, SubjectID, VisitType, FS, PFS) |>
         dplyr::rename(
           fs = FS,
           pfs = PFS
@@ -1055,7 +1096,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       colnames(data_raw)[which(colnames(data_raw) ==
         iter$cyt_response_type)] <- "resp"
 
-      data_raw %>%
+      data_raw |>
         dplyr::mutate(cyt_combn = iter$cyt_response_type)
     },
     "inner" = switch(iter$cyt_response_type,
@@ -1070,9 +1111,9 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   compass_mat_prob <- compass_obj
   rn_vec <- rownames(compass_mat_prob)
 
-  compass_tbl_prob <- compass_mat_prob %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate(SampleID = rn_vec) %>%
+  compass_tbl_prob <- compass_mat_prob |>
+    tibble::as_tibble() |>
+    dplyr::mutate(SampleID = rn_vec) |>
     dplyr::select(SampleID, everything())
 
   colnames(compass_tbl_prob)[-1] <-
@@ -1081,21 +1122,21 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       to = "std"
     )
 
-  compass_tbl_prob <- compass_tbl_prob %>%
+  compass_tbl_prob <- compass_tbl_prob |>
     magrittr::extract(, c("SampleID", unique(.data$cyt_combn)))
 
-  combn_vec_sel <- compass_tbl_prob %>%
+  combn_vec_sel <- compass_tbl_prob |>
     tidyr::pivot_longer(-SampleID,
       names_to = "combn",
       values_to = "prob"
-    ) %>%
-    dplyr::group_by(combn) %>%
-    dplyr::filter(quantile(.data$prob, 1 - quant_min) >= prob_min) %>%
-    dplyr::slice(1) %>%
-    dplyr::ungroup() %>%
+    ) |>
+    dplyr::group_by(combn) |>
+    dplyr::filter(quantile(.data$prob, 1 - quant_min) >= prob_min) |>
+    dplyr::slice(1) |>
+    dplyr::ungroup() |>
     dplyr::pull("combn")
 
-  .data %>%
+  .data |>
     dplyr::filter(cyt_combn %in% combn_vec_sel)
 }
 
@@ -1103,9 +1144,9 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   compass_mat_prob <- compass_obj
   rn_vec <- rownames(compass_mat_prob)
 
-  compass_tbl_prob <- compass_mat_prob %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate(SampleID = rn_vec) %>%
+  compass_tbl_prob <- compass_mat_prob |>
+    tibble::as_tibble() |>
+    dplyr::mutate(SampleID = rn_vec) |>
     dplyr::select(SampleID, everything())
 
   colnames(compass_tbl_prob)[-1] <-
@@ -1114,7 +1155,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       to = "std"
     )
 
-  compass_tbl_prob <- compass_tbl_prob %>%
+  compass_tbl_prob <- compass_tbl_prob |>
     tidyr::pivot_longer(
       -SampleID,
       names_to = "cyt_combn",
@@ -1124,52 +1165,52 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   marker_vec <- unique(.data$cyt_combn)
   marker_vec <- stringr::str_remove_all(marker_vec, "\\+|\\-")
   compass_tbl_prob <- purrr::map_df(marker_vec, function(mk) {
-    compass_tbl_prob %>%
+    compass_tbl_prob |>
       dplyr::filter(grepl(
         paste0(mk, "\\+"),
         cyt_combn
-      )) %>%
-      dplyr::mutate(combn = paste0(mk, "+")) %>%
-      dplyr::group_by(SampleID, combn) %>%
+      )) |>
+      dplyr::mutate(combn = paste0(mk, "+")) |>
+      dplyr::group_by(SampleID, combn) |>
       dplyr::summarise(
         prob = 1 - prod(1 - prob),
         .groups = "drop_last"
-      ) %>%
+      ) |>
       dplyr::ungroup()
   })
 
-  combn_vec_sel <- compass_tbl_prob %>%
-    dplyr::group_by(combn) %>%
-    dplyr::filter(quantile(.data$prob, 1 - quant_min) >= prob_min) %>%
-    dplyr::slice(1) %>%
-    dplyr::ungroup() %>%
+  combn_vec_sel <- compass_tbl_prob |>
+    dplyr::group_by(combn) |>
+    dplyr::filter(quantile(.data$prob, 1 - quant_min) >= prob_min) |>
+    dplyr::slice(1) |>
+    dplyr::ungroup() |>
     dplyr::pull("combn")
 
-  .data %>%
+  .data |>
     dplyr::filter(cyt_combn %in% combn_vec_sel)
 }
 
 .subtract_background <- function(.data) {
-  .data %>%
+  .data |>
     UtilsCytoRSV::calc_prop(
       den = "n_cell_stim",
       num = "count_stim",
       nm = "prop_stim"
-    ) %>%
+    ) |>
     UtilsCytoRSV::calc_prop(
       den = "n_cell_uns",
       num = "count_uns",
       nm = "prop_uns"
-    ) %>%
+    ) |>
     dplyr::mutate(
       prop_bs = prop_stim - prop_uns,
       count_bs = prop_bs * n_cell_stim
-    ) %>%
+    ) |>
     dplyr::rename(
       n_cell = n_cell_stim,
       resp = count_bs
-    ) %>%
-    dplyr::rename(freq_bs = prop_bs) %>%
+    ) |>
+    dplyr::rename(freq_bs = prop_bs) |>
     dplyr::select(-c(
       count_stim, count_uns,
       n_cell_uns, prop_stim,
@@ -1193,18 +1234,18 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         return(data_raw)
       }
       switch(iter$var_dep,
-        "risk6" = DataTidyACSRISK6::data_tidy_risk6 %>%
-          tibble::as_tibble() %>%
+        "risk6" = DataTidyACSRISK6::data_tidy_risk6 |>
+          tibble::as_tibble() |>
           dplyr::rename(resp = risk6),
-        DataTidyACSSoma::data_tidy_soma %>%
+        DataTidyACSSoma::data_tidy_soma |>
           dplyr::mutate(
             Soma_Target = gsub("\\W", "", Soma_Target)
-          ) %>%
-          dplyr::filter(Soma_Target == iter$var_dep) %>%
-          dplyr::group_by_at(c("SubjectID", "VisitType", "Soma_Target")) %>%
-          dplyr::slice(1) %>%
-          dplyr::ungroup() %>%
-          dplyr::rename(resp = Soma_TransformedReadout) %>%
+          ) |>
+          dplyr::filter(Soma_Target == iter$var_dep) |>
+          dplyr::group_by_at(c("SubjectID", "VisitType", "Soma_Target")) |>
+          dplyr::slice(1) |>
+          dplyr::ungroup() |>
+          dplyr::rename(resp = Soma_TransformedReadout) |>
           dplyr::select(SubjectID, VisitType, resp)
       )
     },
@@ -1269,7 +1310,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     stop("pop not recognised")
   )
 
-  data_raw <- data_raw %>%
+  data_raw <- data_raw |>
     dplyr::filter(
       pop == iter$pop,
       stim == iter$stim
@@ -1277,7 +1318,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 
   # make sure that counts are not NA
   # ----------------------
-  data_raw <- data_raw %>%
+  data_raw <- data_raw |>
     dplyr::mutate(
       count_uns = ifelse(is.na(count_uns), 0, count_uns),
       count = ifelse(is.na(count), 0, count)
@@ -1302,7 +1343,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     stop("combn not summed over correctly")
   }
 
-  data_raw_summed <- data_raw_summed %>%
+  data_raw_summed <- data_raw_summed |>
     dplyr::mutate(combn = "summed")
 
   # calculate summed response
@@ -1324,7 +1365,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     stop("combn not summed over correctly")
   }
 
-  data_raw_summed <- data_raw_summed %>%
+  data_raw_summed <- data_raw_summed |>
     dplyr::mutate(combn = "summed")
 
 
@@ -1377,7 +1418,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     stop("pop not recognised")
   )
 
-  data_raw <- data_raw_summed %>%
+  data_raw <- data_raw_summed |>
     dplyr::bind_rows(data_raw)
 
   # calculate frequencies
@@ -1390,17 +1431,17 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
     stop("den not recognised")
   )
 
-  data_raw <- data_raw %>%
+  data_raw <- data_raw |>
     UtilsCytoRSV::calc_freq(
       den = den,
       num = "count",
       nm = "freq_stim"
-    ) %>%
+    ) |>
     UtilsCytoRSV::calc_freq(
       den = paste0(den, "_uns"),
       num = "count_uns",
       nm = "freq_uns"
-    ) %>%
+    ) |>
     dplyr::mutate(
       freq_bs = freq_stim - freq_uns
     )
@@ -1411,8 +1452,8 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   f_l <- iter$filter_approach[[1]]
 
   if ("fdr" %in% names(f_l)) {
-    filter_tbl_fdr <- data_raw %>%
-      dplyr::group_by(pop, pheno, stim, combn) %>%
+    filter_tbl_fdr <- data_raw |>
+      dplyr::group_by(pop, pheno, stim, combn) |>
       dplyr::summarise(
         p = switch(as.character(
           quantile(
@@ -1430,15 +1471,15 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         )$p.value
         ),
         .groups = "drop"
-      ) %>%
-      dplyr::mutate(p_bh = p.adjust(p, method = "BH")) %>%
-      dplyr::filter(p_bh < f_l$fdr) %>%
+      ) |>
+      dplyr::mutate(p_bh = p.adjust(p, method = "BH")) |>
+      dplyr::filter(p_bh < f_l$fdr) |>
       dplyr::select(-p)
 
-    filter_tbl_fdr <- filter_tbl_fdr %>%
+    filter_tbl_fdr <- filter_tbl_fdr |>
       dplyr::select(pop, pheno, stim, combn)
 
-    data_raw <- data_raw %>%
+    data_raw <- data_raw |>
       dplyr::inner_join(
         filter_tbl_fdr,
         by = c("pop", "pheno", "stim", "combn")
@@ -1451,15 +1492,15 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         stop("s2n filter has max val lower than min val")
       }
     }
-    filter_tbl_s2n <- data_raw %>%
-      dplyr::group_by(pop, pheno, stim, combn) %>%
+    filter_tbl_s2n <- data_raw |>
+      dplyr::group_by(pop, pheno, stim, combn) |>
       dplyr::summarise(
         sd = sd(freq_bs),
         med = median(freq_bs),
         s2n = med / sd,
         .groups = "drop"
-      ) %>%
-      dplyr::filter(!is.nan(s2n)) %>%
+      ) |>
+      dplyr::filter(!is.nan(s2n)) |>
       dplyr::filter(s2n > 0)
 
     min_val <- ifelse(
@@ -1479,28 +1520,28 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       min_val
     )
 
-    filter_tbl_s2n <- filter_tbl_s2n %>%
-      dplyr::filter(s2n > min_val) %>%
+    filter_tbl_s2n <- filter_tbl_s2n |>
+      dplyr::filter(s2n > min_val) |>
       dplyr::select(pop, pheno, stim, combn)
 
-    data_raw <- data_raw %>%
+    data_raw <- data_raw |>
       dplyr::inner_join(
         filter_tbl_s2n,
         by = c("pop", "pheno", "stim", "combn")
       )
   }
   if ("f2uns" %in% names(f_l)) {
-    filter_tbl_f2uns <- data_raw %>%
-      dplyr::group_by(pop, pheno, stim, combn) %>%
+    filter_tbl_f2uns <- data_raw |>
+      dplyr::group_by(pop, pheno, stim, combn) |>
       dplyr::summarise(
         g = median(freq_stim) > (f_l$f2uns *
           mad(freq_uns) + median(freq_uns)),
         .groups = "drop"
-      ) %>%
-      dplyr::filter(g) %>%
+      ) |>
+      dplyr::filter(g) |>
       dplyr::select(pop, pheno, stim, combn)
 
-    data_raw <- data_raw %>%
+    data_raw <- data_raw |>
       dplyr::inner_join(
         filter_tbl_f2uns,
         by = c("pop", "pheno", "stim", "combn")
@@ -1508,7 +1549,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
   }
 
   if (iter$den == "pheno") {
-    data_raw %>%
+    data_raw |>
       dplyr::mutate(
         n_cell = n_cell_pheno,
         count_stim = count
@@ -1533,7 +1574,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 }
 
 .prep_dr_faust_cyt_inner <- function(iter, data_raw, ...) {
-  data_raw %>%
+  data_raw |>
     dplyr::filter(
       pop == iter$pop,
       stim == iter$stim,
