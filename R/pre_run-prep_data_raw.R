@@ -108,7 +108,6 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 .prep_dr_flowsom <- function(iter, p_dots, stage, data_raw, ...) {
   switch(stage,
     "outer" = {
-
       # dataset
       data_raw <- switch(iter$ds,
         "cd4_th1_il17" = {
@@ -403,6 +402,27 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
           chnl, gate_name
         )) |>
         dplyr::select(SubjectID, VisitType, stim, resp)
+
+      compass_obj <- DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$compass |>
+        magrittr::extract2("locb0.15_min_clust") |>
+        magrittr::extract2(iter$stim) |>
+        magrittr::extract2("fit") |>
+        magrittr::extract2("mean_gamma")
+
+      compass_tbl <- tibble::tibble(
+        SampleID = rownames(compass_obj),
+        prob1 = compass_obj[, "IFNg&!IL2&TNF&!IL17"] |> as.vector(),
+        prob2 = compass_obj[, "IFNg&IL2&TNF&!IL17"] |> as.vector(),
+        prob3 = compass_obj[, "IFNg&IL2&TNF&IL17"] |> as.vector(),
+        prob4 = compass_obj[, "IFNg&!IL2&TNF&IL17"] |> as.vector()
+      ) |>
+        dplyr::mutate(
+          prob = 1 - (1 - prob1) * (1 - prob2) * (1 - prob3) * (1 - prob4)
+        ) |>
+          dplyr::select(SampleID, prob)
+
+      data_raw <- data_raw |>
+        dplyr::filter(paste0(SubjectID, "_", VisitType) %in% compass_tbl[["SampleID"]])
 
       check_g_1 <- data_raw |>
         dplyr::group_by(SubjectID, VisitType) |>
@@ -760,10 +780,11 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
             dplyr::summarise(n_cell_ag = sum(resp), .groups = "drop")
           data_raw |>
             dplyr::left_join(
-              data_raw_ag_tot, by = c("SubjectID", "VisitType", "stim")
-              ) |>
+              data_raw_ag_tot,
+              by = c("SubjectID", "VisitType", "stim")
+            ) |>
             dplyr::group_by(SubjectID, VisitType, stim) |>
-              dplyr::filter(n_cell_ag >= 5) |>
+            dplyr::filter(n_cell_ag >= 5) |>
             dplyr::filter(resp > n_cell_ag) |>
             dplyr::mutate(resp = resp / n_cell_ag) |>
             dplyr::mutate(resp = pmin(1, resp) |>
@@ -1288,7 +1309,6 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 }
 
 .prep_dr_faust_cyt_filter <- function(iter, data_raw, ...) {
-
   # select pop
   # ----------------------
   data_raw <- switch(iter$pop,
