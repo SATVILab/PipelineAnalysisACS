@@ -1,7 +1,7 @@
 Package: PipelineAnalysisACS
 Type: Package
 Title: Provide analysis pipeline functions for ACS analyses
-Version: 0.2.0.9007
+Version: 0.2.0.9008
 Author: Miguel Julio Rodo
 Maintainer: Miguel Julio Rodo <rdxmig002@myuct.ac.za>
 Description: The acscompendium analyses multiple datasets. 

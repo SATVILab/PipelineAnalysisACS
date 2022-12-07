@@ -419,7 +419,8 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         dplyr::mutate(
           prob = 1 - (1 - prob1) * (1 - prob2) * (1 - prob3) * (1 - prob4)
         ) |>
-          dplyr::select(SampleID, prob)
+        dplyr::filter(prob > 0.75) |>
+        dplyr::select(SampleID, prob)
 
       data_raw <- data_raw |>
         dplyr::filter(paste0(SubjectID, "_", VisitType) %in% compass_tbl[["SampleID"]])
