@@ -371,10 +371,6 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
 .prep_dr_hladr <- function(iter, p_dots, stage, data_raw, ...) {
   switch(stage,
     "outer" = {
-      if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
-        remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-      }
-
       data_raw <- DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$hladr
 
       data_raw <- data_raw |>
