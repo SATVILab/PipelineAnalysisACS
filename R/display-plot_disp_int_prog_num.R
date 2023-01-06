@@ -18,8 +18,8 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
                                   limits_include = NULL,
                                   gg_theme = cowplot::theme_cowplot(),
                                   grid = "xy",
-                                  point_size = NULL) {
-
+                                  point_size = NULL,
+                                  txt_parse = FALSE) {
   # prep
   # --------------
 
@@ -322,7 +322,8 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
         font_size = table_size_text,
         coord = c(ifelse(var_num == "tfmttb", 0.95, 0.05), 0.95),
         skip = table_size_skip,
-        text = res_text
+        text = res_text,
+        parse = txt_parse
       )
     })
   }
