@@ -4,12 +4,7 @@ Title: Provide analysis pipeline functions for ACS analyses
 Version: 0.2.0.9010
 Author: Miguel Julio Rodo
 Maintainer: Miguel Julio Rodo <rdxmig002@myuct.ac.za>
-Description: The acscompendium analyses multiple datasets. 
-    They are not always analysed in the same package (for reasons
-    of differing collaborators), but require similar
-    functions for the analysispipeline::run_analysis_pipeline 
-    function. This package provides these functions for
-    these various analysis packages. 
+Description: Provides common functions for running ACS CyTOF analyses.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true   
