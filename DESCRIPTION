@@ -1,7 +1,7 @@
 Package: PipelineAnalysisACS
 Type: Package
 Title: Provide analysis pipeline functions for ACS analyses
-Version: 0.2.0.9010
+Version: 0.2.1.9000
 Author: Miguel Julio Rodo
 Maintainer: Miguel Julio Rodo <rdxmig002@myuct.ac.za>
 Description: Provides common functions for running ACS CyTOF analyses.
