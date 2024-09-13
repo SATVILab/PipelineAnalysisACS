@@ -111,33 +111,22 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       # dataset
       data_raw <- switch(iter$ds,
         "cd4_th1_il17" = {
-          if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
-            remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-          }
-          DataTidyACSCyTOFCytokinesTCells::cd4_th1_il17$flowsom
+            path_flowsom <- projr::projr_path_get(
+              "data-raw", "DataTidyACSCyTOFCytokinesTCells", "flowsom.rda"
+            )
+            load(path_flowsom)
+            flowsom # nolint
         },
         "cd8_th1" = {
-          if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
-            remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-          }
           DataTidyACSCyTOFCytokinesTCells::cd8_th1$flowsom
         },
         "tcrgd_th1" = {
-          if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
-            remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
-          }
           DataTidyACSCyTOFCytokinesTCells::tcrgd_th1$flowsom
         },
         "nk_ifng_tnf_il22" = {
-          if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
-            remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
-          }
           DataTidyACSCyTOFCytokinesNKBCells::nk_ifng_tnf_il22$flowsom
         },
         "bcell_ifng_il6" = {
-          if (!requireNamespace("DataTidyACSCyTOFCytokinesNKBCells", quietly = TRUE)) {
-            remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesNKBCells")
-          }
           DataTidyACSCyTOFCytokinesNKBCells::bcell_ifng_il6$flowsom
         }
       )
@@ -1326,7 +1315,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
         "data", "data_tidy_faust_cyt.rda", package = "DataTidyACSCyTOFCytokinesTCells"
       )
       load(path_data_tidy_faust_cyt)
-      data_tidy_faust_cyt
+      data_tidy_faust_cyt # nolint
     },
     stop("pop not recognised")
   )
