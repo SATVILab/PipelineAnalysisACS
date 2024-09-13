@@ -112,7 +112,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       data_raw <- switch(iter$ds,
         "cd4_th1_il17" = {
             path_flowsom <- projr::projr_path_get(
-              "data-raw", "DataTidyACSCyTOFCytokinesTCells", "flowsom.rda"
+              "data-raw", "DataTidyACSCyTOFCytokinesTCells", "data", "flowsom.rda"
             )
             load(path_flowsom)
             flowsom # nolint
