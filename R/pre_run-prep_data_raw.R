@@ -1311,11 +1311,7 @@ prep_data_raw <- function(rmd, iter, p_dots, ...) {
       if (!requireNamespace("DataTidyACSCyTOFCytokinesTCells", quietly = TRUE)) {
         remotes::install_github("SATVILab/DataTidyACSCyTOFCytokinesTCells")
       }
-      path_data_tidy_faust_cyt <- system.file(
-        "data", "data_tidy_faust_cyt.rda", package = "DataTidyACSCyTOFCytokinesTCells"
-      )
-      load(path_data_tidy_faust_cyt)
-      data_tidy_faust_cyt # nolint
+       DataTidyACSCyTOFCytokinesTCells::data_tidy_faust_cyt
     },
     stop("pop not recognised")
   )
