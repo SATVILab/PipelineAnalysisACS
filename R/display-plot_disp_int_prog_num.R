@@ -224,7 +224,7 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
   # ------------------
   if (n_cell_ind) {
     max_pt <- max(plot_tbl_raw$resp)
-    max_est <- quantile(plot_tbl_eff$upper, 0.75)
+    max_est <- quantile(plot_tbl_eff$upper, 0.75, na.rm = TRUE)
     max_val <- max(max_pt, max_est)
 
     if (!is.null(max_sd)) {
@@ -250,11 +250,11 @@ plot_disp_int_cat_num <- function(mod, .data, data_nm,
       coord_cartesian(ylim = c(0, max_val))
   } else {
     max_pt <- max(plot_tbl_raw$resp)
-    max_est <- quantile(plot_tbl_eff$upper, 0.75)
+    max_est <- quantile(plot_tbl_eff$upper, 0.75, na.rm = TRUE)
     max_val <- max(max_pt, max_est)
 
     min_pt <- min(plot_tbl_raw$resp)
-    min_est <- quantile(plot_tbl_eff$lower, 0.25)
+    min_est <- quantile(plot_tbl_eff$lower, 0.25, na.rm = TRUE)
     min_val <- min(min_pt, min_est)
 
     if (!is.null(max_sd)) {
